@@ -1,0 +1,179 @@
+import React, { useState, useEffect } from 'react';
+import Button from 'react-bootstrap/Button';
+import { FaEdit, FaCheck, FaPlus, FaMinus, } from "react-icons/fa";
+import "./sidebar.css";
+import { FaXmark } from "react-icons/fa6";
+
+import axios from 'axios';
+
+const RoutePopup = ({ onEdit, onSave, onCancel, onDelete }) => {
+  const [data, setData] = useState([]);
+  const [editedIndex, setEditedIndex] = useState(null);
+
+  useEffect(() => {
+    // Fetch data from the API when the component mounts
+    const apiUrl = 'http://localhost:5000/api/edgeMaster';
+
+    axios.get(apiUrl)
+      .then((response) => {
+        console.log(response.data)
+        setData(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  const handleEdit = (index) => {
+    setEditedIndex(index);
+  };
+
+  const handleSave = () => {
+    // Make an API request to save the edited data here
+    // Assuming you have an API endpoint to update the data
+    const editedItem = data[editedIndex];
+    console.log(editedItem.nodeId,'what is this')
+    const edite = {
+      
+        "branchId": "1001",
+        "routeId": "3",
+        "sequenceId": "3",
+        "sourceNodeId": editedItem.sourceNodeId,
+        "targetNodeId": "4",
+        "materialType": editedItem.materialType,
+        "edgeStyle": "Smoothstep",
+        "edgeColor": "#fff",
+        "edgeThickness": "2",
+        "animation": "False",
+        "arrow": "True"
+      
+    }
+    console.log(edite)
+    // // Update the edited item with the new values
+    // // You can use axios.put or a similar method to send the data to your API
+    axios.put(`http://localhost:5000/api/edgeMaster/${editedItem.edgeId}`, edite)
+      .then((response) => {
+        console.log('Data saved successfully',response.data);
+        // Clear the edited index
+        setEditedIndex(null);
+      })
+      .catch((error) => {
+        console.error('Error saving data:', error);
+      });
+  };
+
+  const handleCancel = () => {
+    // Clear the edited index to cancel editing
+    setEditedIndex(null);
+  };
+
+  const handleDelete = (index) => {
+    const itemToDelete = data[index];
+    const apiUrl = `http://localhost:5000/api/edgeMaster/${itemToDelete.edgeId}`;
+
+    axios.delete(apiUrl)
+      .then((response) => {
+        console.log('Data deleted successfully', response.data);
+        // Remove the deleted item from the data array
+        const newData = [...data];
+        newData.splice(index, 1);
+        setData(newData);
+      })
+      .catch((error) => {
+        console.error('Error deleting data:', error);
+      });
+  };
+
+  
+
+  return (
+    <div className="node-editor" style={{ backgroundColor: 'whitesmoke', position: 'absolute', top: '110px', left: '295px', border: '1px solid black' }}>
+      <table style={{ padding: '50px' }} cellPadding={'5px'} border={'1px'}>
+        <thead border={'1px'}>
+          <tr>
+            <th></th>
+            <th>Edge ID</th>
+            <th>sourceNodeId</th>
+            <th>materialType</th>
+            {/* <th>Height</th>
+            <th>X position</th>
+            <th>Y position</th> */}
+          </tr>
+        </thead>
+        <tbody border={'1px'} style={{ textAlign: 'center' }}>
+          {data.map((item, index) => (
+            <tr key={item.routeId} style={{ cursor: 'pointer' }}>
+              <td>
+                <input type="radio" name="radio" />
+              </td>
+              <td style={{ textAlign: 'center' }}>{item.edgeId}</td>
+              <td style={{ textAlign: 'left' }}>
+                {editedIndex === index ? (
+                  <input
+                    type="text"
+                    value={item.sourceNodeId}
+                    onChange={(e) => {
+                      // Update the edited item with the new value
+                      const newData = [...data];
+                      newData[index].sourceNodeId = e.target.value;
+                      setData(newData);
+                    }}
+                    style={{ border: 'none', width: '130px', backgroundColor: 'whitesmoke' }}
+                  />
+                ) : (
+                  <div>
+                      {item.sourceNodeId}
+                  </div>
+                )}
+              </td>
+              <td style={{ textAlign: 'left' }}>
+                {editedIndex === index ? (
+                  <input
+                    type="text"
+                    value={item.materialType}
+                    onChange={(e) => {
+                      // Update the edited item with the new value
+                      const newData = [...data];
+                      newData[index].materialType = e.target.value;
+                      setData(newData);
+                    }}
+                    style={{ border: 'none', width: '70px', backgroundColor: 'whitesmoke' }}
+                  />
+                ) : (
+                  <div style={{width:'90px'}}>{item.materialType}</div>
+                )}
+              </td>
+              <td className="btn pr-3">
+                <button style={{border:'none'}} onClick={() => handleDelete(index)}><FaMinus /></button>
+              </td>
+              <td className="btn pr-0">
+                {editedIndex === index ? (
+                  <>
+                    <button style={{border:'none'}} onClick={() => handleEdit(index)}><FaEdit /></button>
+                  </>
+                ) : (
+                  <button style={{border:'none'}} onClick={() => handleEdit(index)}><FaEdit /></button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className='pt-2 mb-2'>
+        <Button variant="primary" onClick={onEdit} style={{ marginLeft: '5px' }}>
+          <FaPlus />
+        </Button>
+        &nbsp;&nbsp;
+        <Button variant="success" onClick={handleSave} style={{ marginLeft: '120px' }}>
+          <FaCheck />
+        </Button>
+        &nbsp;&nbsp;
+        <Button variant="danger" onClick={onCancel}>
+        <FaXmark />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default RoutePopup;

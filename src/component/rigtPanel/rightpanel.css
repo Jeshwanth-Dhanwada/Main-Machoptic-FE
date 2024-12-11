@@ -1,0 +1,52 @@
+.employee-list-container {
+    height: 340px;
+    overflow-y: auto;
+}
+
+.employee-list-item:hover {
+    background-color: aquamarine;
+}
+
+.dndflow {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+  }
+  
+  .reactflow-wrapper {
+    flex-grow: 1;
+    height: 100vh;
+  }
+  
+  .dndflow aside {
+    background: #fff;
+    border-left: 1px solid #eee;
+    font-size: 12px;
+    padding: 15px 10px;
+  }
+  .right-side-bar {
+    max-width: 150px;
+    width: 10%;
+  }
+  
+  .dndflow .dndnode,
+  .dndflow aside .description {
+    margin-bottom: 10px;
+  }
+  
+  .dndflow .dndnode {
+    align-items: center;
+    border: 1px solid #1a192b;
+    border-radius: 2px;
+    cursor: grab;
+    display: flex;
+    height: 20px;
+    width: 150px;
+    justify-content: center;
+    /* padding: 4px; */
+  }
+  
+  .description {
+    font-size: 18px;
+    font-weight: 600;
+  }

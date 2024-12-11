@@ -1,0 +1,130 @@
+*{
+  font-size: 13px;
+}
+*{
+  /* font-family:'Courier New', Courier, monospace */
+  /* font-family:sans-serif */
+  font-family:serif,
+
+}
+.drawer-arrow-icon {
+    cursor: pointer;
+    float: right;
+    margin: 2px 5px;
+    color: black;
+    position: fixed;
+    right: 0;
+}
+
+.dashboard-container {
+    width: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    bottom: 0;
+    right: 0;
+    z-index: 4;
+}
+
+
+.dashboard-right-container {
+    overflow: hidden;
+    width: 35%;
+    float: inline-end;
+    height: 100%;
+    z-index: 4;
+    position: sticky;
+    right: 0%;
+    top: 78px;
+    margin-top: '100px';
+  }
+.dashboard-right-container2 {
+    overflow: hidden;
+    width: 50%;
+    float: inline-end;
+    height: 100%;
+    z-index: 4;
+    position: sticky;
+    right: 0%;
+    top: 78px;
+    margin-top: '100px';
+  }
+
+  .dashboard-right-container.partial {
+    height: 100%; /* Set the initial partial height as per your requirement */
+    width:0px;
+    margin-left: '100px';
+  }
+  
+  .dashboard-right-container.expanded {
+    height: 100%; /* Set to 100% to fully expand, adjust as needed */
+    margin-top: -6px;
+  }
+  .dashboard-right-container2.partial {
+    height: 100%; 
+    width:40px;
+    margin-left: '100px';
+  }
+  
+  .dashboard-right-container2.expanded {
+    height: 100%; 
+  }
+
+  /* background-color: #cfe8fc; */
+  /* .app-footer-content {
+    height: 93vh;
+    background-image: url("../../public/lalit-kumar-HpPmiduLDC0-unsplash.jpg");
+    top: 45px;
+    left: -10px;
+    position: relative;
+    z-index: 4;
+} */
+
+.app-footer-content {
+  /* background-color: #648198; */
+  background-color: #F5F8F9;
+  /* background-color: #cfe8fc; */
+  /* background-image: url("../../public/lalit-kumar-HpPmiduLDC0-unsplash.jpg");
+  background-size: cover; /* Set the background image to cover the entire element */
+  /* background-position: center; Center the background image  */
+  /* Optionally, set a fixed size for the element */
+  /* width: 100%; 
+  height: 100%;  */
+  height: 93vh;
+  top: 45px;
+  left: -10px;
+  position: relative;
+  z-index: 4;
+ } 
+
+ #ArrowIcon{
+  background-color: #09587C;
+  position:'absolute';
+  bottom:0px;
+  width:47px;
+  height:25px;
+  color: #ffffff; 
+ }
+
+ #FaCheck{
+  color: green;
+  cursor: pointer;
+ }
+ #FaMinus{
+  color :red;
+  cursor: pointer;
+ }
+ #FaEdit{
+  color: blue;
+  cursor: pointer;
+ }
+
+ .Addborder{
+  border: .1rem solid #BDBDBD;
+  border-radius: 2px;
+ }
+#InputSize{
+  width: 50px;
+  flex: 1;
+}

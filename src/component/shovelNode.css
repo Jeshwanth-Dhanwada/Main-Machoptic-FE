@@ -1,0 +1,79 @@
+button:disabled {
+    opacity: 0.3;
+}
+
+.go_action_button {
+    background-color: #1976d2;
+    height: 45px;
+    width: 80px;
+    margin: 8px 0px 0px 10px;
+    border: 0px solid ;
+    /* margin-top: 8px; */
+}
+
+.clear_action_button {
+    background-color: #f22222;
+    height: 45px;
+    width: 80px;
+    margin: 8px 0px 0px 20px;
+    border: 0px solid ;
+    /* margin-top: 8px; */
+}
+.clear_action_button:hover{
+    background-color: #f22222;
+    height: 45px;
+    width: 80px;
+    margin: 8px 0px 0px 20px;
+    border: 0px solid ;
+
+}
+
+.memeTypeSelect {
+    width: 100px;
+    background-color: white;
+    color: black;
+    height: 45px;
+    padding-top: 0px;
+}
+
+.nodes-numbers-filter {
+    width: 70px;
+    background-color: white;
+    color: black;
+    height: 45px;
+    padding-top: 0px;
+}
+
+.actionContainer {
+    display: flex;
+    position: absolute;
+    z-index: 30;
+    left: 3px;
+    top: 8px;
+}
+
+.main-nav {
+    display: flex;
+    position: absolute;
+    /* z-index: 30; */
+    top: 8px;
+    background-color: #f22222;
+}
+
+#demo-simple-select-option2, 
+#demo-simple-select-option1,
+#demo-simple-select-label {
+    color: grey;
+}
+
+.tabs-class{
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.radio-group-container {
+    position: fixed;
+    right: 0;
+    top: 52px;
+    z-index: 2;
+}

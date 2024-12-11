@@ -1,0 +1,1002 @@
+/* eslint-disable import/no-anonymous-default-export */
+import Dagre from "@dagrejs/dagre";
+import React, { useCallback, useState,useEffect } from "react";
+import { BsQuestionCircleFill } from "react-icons/bs";
+// import department from "./component/department.js";
+import { removeElements } from 'react-flow-renderer';
+import EdgeEditPopup from "./EdgeEditor.js";
+// import RadioButtonGroup from "./radiobutton";
+import RoutePopup from "./Route.js";
+import axios from 'axios';
+import ReactFlow, {
+  Panel,
+  useNodesState,
+  useEdgesState,
+  useReactFlow,
+  // Controls,
+  Background,
+  addEdge,
+  MarkerType
+} from "reactflow";
+import NodesPopup from "./NodePopup";
+import EdgePopup from "./edgePopup"
+// import department from "./component/department.js"
+// import MiniMapNode from './MiniMapNode.js';
+
+import { initialNodes, initialEdges } from "../nodes-edges.js";
+import "reactflow/dist/style.css";
+// import CustomNode from './component/customnode.js'
+import Button from "react-bootstrap/Button";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Tooltip from "react-bootstrap/Tooltip";
+
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import {
+  FaPlus,
+  FaTrash,
+  FaRulerVertical,
+  FaRulerHorizontal,
+  FaEdit,
+  FaSave,
+} from "react-icons/fa";
+import NodeEditor from "./NodeEditor.js";
+// import { initialNodes, initialEdges } from './nodes-edges.js';
+// import { Tooltip as BsTooltip } from "bootstrap"
+let directionOn = ''
+
+const connectionLineStyle = { stroke: "black" };
+const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+
+// Convert the array to JSON format
+
+
+
+
+const getLayoutedElements = (nodes, edges, options, direction) => {
+  // const isHorizontal = direction === "LR";
+  // g.setGraph({ rankdir: direction });
+  g.setGraph({ rankdir: options.direction });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) => g.setNode(node.id, node));
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const { x, y } = g.node(node.id);
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
+};
+
+
+
+// const nodeColor = (node) => {
+//   switch (node.type) {
+//     case "input":
+//       return "#6ede87";
+//     case "output":
+//       return "#6865A5";
+//     default:
+//       return "#ff0072";
+//   }
+// };
+
+let id = 1;
+// let nodeId = 0;
+const getId = () => {
+  const newId = id;
+  id += 1; // Increment by 1
+  return `${newId}`;
+};
+const HomeComponent = () => {
+  const { fitView, addNodes } = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // const defaultViewport = { x: 0, y: 0, zoom: 0.5 };
+  const [selectedNodeForEdit, setSelectedNodeForEdit] = useState(null);
+  const [selectedEdgeForEdit, setSelectedEdgeForEdit] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+
+  // console.log(data,'nodes_data')
+
+  //Add Edge connection logic ----------------------
+
+  const onConnect = useCallback((params) => {
+  const newEdge = {
+    ...params,
+    type: "smoothstep", // Set the type to "smoothstep"
+    label: 'label',
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      width: 25,
+      height: 25,
+      color: '#000',
+      arrow: true
+    },
+    style: { strokeWidth: 1, stroke: "#000" }, // Customize the edge style if needed
+    animated: false,
+  };
+
+  setEdges((edges) => addEdge(newEdge, edges));
+}, [setEdges]);
+
+  // Delete edge connection --------------------
+
+  // const onEdgeClick = (event, edge) => {
+  //   // Remove the clicked edge from the edges array
+  //   const updatedEdges = edges.filter((e) => e.id !== edge.id);
+  //   console.log(updatedEdges,"edge_id",edge.id)
+  //   setEdges(updatedEdges);
+  // };
+
+
+
+  // Add Node --------------------------------------
+  
+  const [consecutiveAddCounter, setConsecutiveAddCounter] = useState(0);
+  const onAddNode = useCallback(() => {
+    const selectedNode = nodes.find((node) => node.selected);
+    
+    
+    if (!selectedNode) {
+      setConsecutiveAddCounter((prevCount) => prevCount + 1);
+
+        if (consecutiveAddCounter >= 1) {
+            // Show an alert when adding nodes consecutively for the second time
+            alert("Please select a node before adding a new one.");
+        }else {
+          const newNode = {
+            id: getId(),
+            position: { x: 0, y: 0 },
+            data: {
+              label: `Node ${id}`,
+            },
+            sourcePosition: 'right',
+            targetPosition:'left',
+            style: {
+              background: 'white', // Set background color
+              color: 'black',     // Set text color
+              borderColor: '#000',
+              borderStyle: 'solid',
+              borderWidth: '1px',
+              fontSize: '14', // Set the font size
+              fontStyle: 'normal', // Set the font style
+              width:'150',
+              height:'45',
+              borderRadius:'50%',
+              justifycontent: 'center', /* Horizontally center */
+              alignitems:'center'/* Vertically center */
+            },
+          };
+          const newEdge = {
+            id: `${newNode.id}`,
+            source: 'left',
+            target: '',
+            type: "smoothstep",
+            animated: false,
+            label:'New Label',
+            style: { strokeWidth: 1,
+              stroke: '#000' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 25,
+              height: 25,
+              color: '#000',
+              arrow: true
+            },
+          };
+    
+        addNodes(newNode,newEdge,setEdges);
+        console.log(newNode,'new node')
+        console.log(nodes,'new node')
+        }
+    }
+     else{
+      setConsecutiveAddCounter(0);
+      const xOffset = 200; // Initial x-offset
+      const yOffset = 0; // Initial y-offset
+      const offsetIncrement = 50; // Increase in offset for each new node
+
+      const existingNodesAtPosition = (x, y) =>
+        nodes.some((node) => node.position.x === x && node.position.y === y);
+
+      const calculatePosition = (x, y, offset) => {
+        while (existingNodesAtPosition(x, y)) {
+          x += offset;
+          y += offset;
+        }
+        return { x, y };
+        
+      };
+      
+      console.log("something",initialNodes);
+
+      // If a node is selected, add the new node and create a connection
+      const newX = selectedNode.position.x + xOffset;
+      const newY = selectedNode.position.y + yOffset;
+
+      const { x: finalX, y: finalY } = calculatePosition(
+        newX,
+        newY,
+        offsetIncrement
+      );
+      if(directionOn === 'TB'){
+        const newNode = {
+          id: getId(),
+          position: { x: finalX, y: finalY },
+          sourcePosition: 'bottom',
+          targetPosition: 'top',
+          data: {
+            label: `Node ${id}`,
+          },
+          style: {
+            background: 'white', // Set background color
+            color: 'black',     // Set text color
+            borderColor: '#000',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            fontSize: '14', // Set the font size
+            fontStyle: 'normal', // Set the font style
+            width:'150',
+            height:'45',
+            justifycontent: 'center', /* Horizontally center */
+            alignitems:'center'/* Vertically center */
+          },
+        };
+        const newEdge = {
+          id: `${newNode.id}-edge`,
+          source: selectedNode.id,
+          target: newNode.id,
+          type: "smoothstep",
+          animated: false,
+          label:'New Label',
+          style: { strokeWidth: 1,
+            stroke: '#000' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 25,
+              height: 25,
+              color: '#000',
+              arrow: true
+            },
+        };
+        addNodes(newNode);
+        setEdges((prevEdges) => [...prevEdges, newEdge]);
+      }
+      else{
+        const newNode = {
+          id: getId(),
+          position: { x: finalX, y: finalY },
+          sourcePosition: 'right',
+          targetPosition: 'left',
+          data: {
+            label: `Node ${id}`,
+          },
+          style: {
+            background: 'white', // Set background color
+            color: 'black',     // Set text color
+            borderColor: '#000',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            fontSize: '14', // Set the font size
+            fontStyle: 'normal', // Set the font style
+            width:'150',
+            height:'45'
+          },
+        };
+        const newEdge = {
+          id: `${newNode.id}-edge`,
+          source: selectedNode.id,
+          target: newNode.id,
+          type: "smoothstep",
+          animated: false,
+          label:'New Label',
+          style: { strokeWidth: 1,
+            stroke: '#000' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 25,
+              height: 25,
+              color: '#000',
+              arrow: true
+            },
+        };
+        addNodes(newNode);
+        setEdges((prevEdges) => [...prevEdges, newEdge]);
+
+      }
+    }
+    
+  }, [addNodes, consecutiveAddCounter, nodes, setEdges]);
+
+
+  // Delete Node -------------------------------
+
+  const deleteSelectedElements = useCallback(() => {
+    setConsecutiveAddCounter(0);
+    const selectedNode = nodes.find((node) => node.selected);
+    if (!selectedNode) {
+      // Display an alert or notification to the user
+      alert("Please select a node to delete.");
+      return;
+    }
+    const selectedNodeIds = new Set();
+    const selectedEdgeIds = new Set();
+    nodes.forEach((node) => {
+      if (node.selected) {
+        selectedNodeIds.add(node.id);
+        // Collect descendant nodes by traversing edges
+        edges.forEach((edge) => {
+          if (edge.source === node.id) {
+            selectedNodeIds.add(edge.target);
+          }
+        });
+      }
+    });
+
+    // Collect edges connected to the selected nodes
+    edges.forEach((edge) => {
+      if (
+        selectedNodeIds.has(edge.source) ||
+        selectedNodeIds.has(edge.target)
+      ) {
+        selectedEdgeIds.add(edge.id);
+      }
+    });
+
+    const filteredNodes = nodes.filter((node) => !selectedNodeIds.has(node.id));
+    console.log(filteredNodes);
+    const filteredEdges = edges.filter((edge) => !selectedEdgeIds.has(edge.id));
+
+    setNodes(filteredNodes);
+    setEdges(filteredEdges);
+  }, [nodes, edges, setNodes, setEdges]);
+
+  const [layoutDirection, setLayoutDirection] = useState("TB"); // Default to "TB" (top-bottom) layout
+  const onLayout = useCallback(
+    (direction) => {
+      const newDirection = layoutDirection === "TB" ? "LR" : "TB"; // Toggle the layout direction
+      const layouted = getLayoutedElements(nodes, edges, { direction: newDirection });
+      setLayoutDirection(newDirection);
+      // const layouted = getLayoutedElements(nodes, edges, { direction });
+      directionOn = direction;
+      console.log(directionOn);
+  
+      // Set source and target positions based on the direction
+      const updatedNodes = layouted.nodes.map((node) => ({
+        ...node,
+        sourcePosition: newDirection === 'TB' ? 'bottom' : 'right',
+        targetPosition: newDirection === 'TB' ? 'top' : 'left',
+        
+      }));
+  
+      setNodes(updatedNodes);
+      setEdges([...layouted.edges]);
+      const fitViewOptions = {padding:0.4}
+      window.requestAnimationFrame(() => {
+        fitView(fitViewOptions);
+      });
+    },
+    [layoutDirection, nodes, edges, setNodes, setEdges, fitView]
+  );
+  
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedEdge, setSelectedEdge] = useState(null);
+  // const [edges, setEdges] = useState([...]); // Initial edge data
+  const [showNodePopup, setNodeShowPopup] = useState(false);
+  const [selectedNodess, setSelectedNodes] = useState(null);
+  //Edit edge ------------
+
+  const handleEditEdge = (edge) => {
+    setSelectedEdgeForEdit(edge);
+    console.log("******",edge)
+    // Set the selected property of the node to true
+    const updatedEdges = edges.map((e) => ({
+      ...e,
+      selected: e.id === edge.id,
+      
+      // style: {
+      //   // backgroundColor: 'red',
+      //   border: '2px solid red',
+      // },
+      
+    }));
+    setNodes(updatedEdges);
+    console.log("*******")
+    
+  };
+  const handleEdgeSave = (editedEdge) => {
+    const updatedEdges = edges.map((edge) =>
+    edge.id === editedEdge.id ? editedEdge : edge
+    );
+    setNodes(updatedEdges);
+    setSelectedEdgeForEdit(null);
+  };
+  
+  const handleEdgeCancel = () => {
+    setSelectedEdgeForEdit(null);
+  };
+
+
+  //Edit Node ------------
+
+  const handleEditNode = (node) => {
+    setSelectedNodeForEdit(node);
+    console.log("******")
+    // Set the selected property of the node to true
+    const updatedNodes = nodes.map((n) => ({
+      ...n,
+      selected: n.id === node.id,
+      // style: {
+      //   // backgroundColor: 'red',
+      //   border: '2px solid red',
+      // },
+      
+    }));
+    setNodes(updatedNodes);
+    
+  };
+
+  const handleNodeSave = (editedNode) => {
+    const updatedNodes = nodes.map((node) =>
+      node.id === editedNode.id ? editedNode : node
+    );
+    setNodes(updatedNodes);
+    setSelectedNodeForEdit(null);
+  };
+
+  const handleNodeCancel = () => {
+    setSelectedNodeForEdit(null);
+  };
+
+
+  // Edges Popup --------------------
+
+//   const [layout, setLayout] = useState("TB"); // Default layout is vertical
+
+  
+  const generateJSONData = (nodes, edges) => {
+    const jsonData = {
+      nodes: nodes.map(node => ({
+        id: node.id,
+        sourcePosition:node.sourcePosition,
+        targetPosition:node.targetPosition,
+        label: node.data.label,
+        position: node.position,
+        style:node.style
+       
+      })),
+      edges: edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type,
+        label: edge.label,
+        animated: edge.animated,
+        style: { strokeWidth: 1, stroke: '#000' },
+        mark:edge.markerEnd
+
+
+      })),
+    };
+    return JSON.stringify(jsonData, null, 2); // Use null and 2 for pretty formatting
+  };
+  
+  
+  const generateJSONDataForEdges = (edges) => {
+    const jsonData = {
+      edges: edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type,
+        label: edge.label,
+        animated: edge.animated,
+        style: { strokeWidth: 1, stroke: '#000' },
+        mark: edge.markerEnd,
+      })),
+    };
+    return JSON.stringify(jsonData, null, 2); // Use null and 2 for pretty formatting
+  };
+  
+
+  // const [jsonFormatData, setJsonFormatData] = useState(generateJSONData(nodes, edges));
+
+  const handleSave = () => {
+    const jsonFormatData = generateJSONData(nodes, edges);
+    console.log(jsonFormatData)
+    // // Perform the save operation here. You can save jsonFormatData to a file, send it to a server, etc.
+    // // For example, you can save it to a file using the Blob API:
+    // const jsonDataBlob = new Blob([jsonFormatData], { type: 'application/json' });
+    // const downloadLink = document.createElement('a');
+    // downloadLink.href = URL.createObjectURL(jsonDataBlob);
+    // downloadLink.download = 'data.json';
+    // downloadLink.click();
+  };
+  
+
+  // const generateJSONDataForNodes = (nodes) => {
+  //   const jsonData = {
+  //     nodes: nodes
+  //     .map((node) => (
+  //       {
+  //       "branchId": "1001",
+  //       "nodeCategoryId": "203",
+  //       "nodeName": node.data.label,
+  //       "width": node.style.width,
+  //       "height": node.style.height,
+  //       "xPosition": node.position.x,
+  //       "yPosition": node.position.y,
+  //       "borderColor": node.style.borderColor,
+  //       "borderWidth": node.style.borderWidth,
+  //       "borderStyle": node.style.borderStyle,
+  //       "fillColor": "#000",
+  //       "fillTransparency": "Fill Transparency Value",
+  //       'isRootNode': false,
+  //       "isParent": false,
+  //       "formula": "Formula Value",
+  //       "inputMaterialId": "Input Material ID",
+  //       "outputMaterialId": "Output Material ID",
+  //       "inputMaterialUnitId": "Input Material Unit ID",
+  //       "outputMaterialUnitId": "Output Material Unit ID",
+  //       "fuelUsed": "Fuel Used Value",
+  //       "fuelUnitsId": "Fuel Units ID",
+  //       "capacity": "Capacity Value",
+  //       "capacityUnitsId": "Capacity Units ID"
+  //     }
+  //     )),
+  //   };
+  //   // Convert the jsonData object to a JSON string
+  //     // const jsonString = JSON.stringify(jsonData, null, 2);
+
+  //     // Return the JSON string
+  //     return JSON.stringify(jsonData);
+  // };
+
+  
+  // const handleNodes = () => {
+  //    // Generate JSON data for nodes
+  // const nodesData = generateJSONDataForNodes(nodes);
+
+  // // Now you can access the JSON data and its properties
+  // const parsedNodesData = JSON.parse(nodesData);
+  // console.log(parsedNodesData, "*************");
+
+  // // Send the parsedNodesData to the database via an API
+  // axios
+  //   .post('http://localhost:5000/api/nodeMaster/', { nodes: parsedNodesData.nodes } )
+    
+  //   .then((response) => {
+  //     console.log('Data saved successfully', response.data);
+  //   })
+  //   .catch((error) => {
+  //     console.error('Error saving data:', error);
+  //   });
+  // };
+
+
+  const handleEdges = () => {
+    const jsonFormatData = generateJSONDataForEdges(edges);
+    console.log(jsonFormatData)
+    // Perform the save operation here. You can save jsonFormatData to a file, send it to a server, etc.
+    // For example, you can save it to a file using the Blob API:
+    const jsonDataBlob = new Blob([jsonFormatData], { type: 'application/json' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(jsonDataBlob);
+    downloadLink.download = 'data.json';
+    downloadLink.click();
+  };
+
+  const onEdgeContextMenu = (event, edge) => {
+    event.preventDefault(); // Prevent the default context menu
+    setSelectedEdge(edge);
+    setShowPopup(true);
+    setNodeShowPopup(false)
+    
+  };
+
+  const onClosePopup = () => {
+    setShowPopup(false);
+    setSelectedEdge(null);
+  };
+
+  const onSavePopup = (edge) => {
+    const updatedEdges = edges.map(existingEdge =>
+      existingEdge.id === edge.id ? { ...existingEdge, ...edge } : existingEdge
+    );
+    setEdges(updatedEdges);
+    onClosePopup();
+
+  };
+  // Nodes popup -----
+
+  const onNodeContextMenu = (event, node) => {
+    
+    event.preventDefault(); // Prevent the default context menu
+    setSelectedNodes(node);
+    setNodeShowPopup(true);
+    setShowPopup(false)
+  };
+
+  const onCloseNodePopup = () => {
+    setNodeShowPopup(false);
+    setSelectedNodes(null);
+  };
+
+  const onSaveNodePopup = (node) => {
+    const updateNodes = nodes.map(existingNode =>
+        existingNode.id === node.id ? { ...existingNode, ...node } : existingNode
+    )
+    setNodes(updateNodes)
+    console.log('Saving node:', node);
+    onCloseNodePopup();
+  };
+
+  // Route popup ----------
+
+  const [showRoutePopup, setShowRoutePopup] = useState(false);
+
+  const handleRouteClick = () => {
+    setShowRoutePopup(true);
+  };
+
+  const onCloseRoute = () => {
+    setShowRoutePopup(false);
+  };
+
+  const onSaveRoute = () => {
+    onCloseRoute();
+  };
+
+ // to set edges edges to be shown are not ---------
+
+ const [showEdges, setShowEdges] = useState(true); // State to control edges visibility
+//  const [radioChecked, setRadioChecked] = useState(true); // State to control radio button checked state
+
+
+  // Function to toggle edges visibility
+  const toggleEdgesVisibility = () => {
+    setShowEdges(!showEdges);
+    // setRadioChecked(!radioChecked);
+  };
+  // const toggleEMployeeMapping = () => {
+  //   setShowEdges(!showEdges)
+  // }
+
+
+  // Reading the Nodes data from the database
+
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    // Fetch data from the API when the component mounts
+    const apiUrl = 'http://localhost:5000/api/nodeMaster';
+
+    axios.get(apiUrl)
+      .then((response) => {
+        console.log(response.data)
+        setData(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  
+  return (
+    <div style={{ display: "flex" }}>
+      <div
+        style={{
+          width: sidebarCollapsed ? "95%" : "100%",
+          transition: "width 0.1s",
+          zIndex: 1,
+        }}
+      >
+        <div style={{ height: 565, width: "100%", overflow: "hidden" }}>
+        {/* <ExampleForm /> */}
+        {/* <Navbar /> */}
+        {/* <div 
+          className="container-fluid"
+          style={{width:'200px',
+                    height:'150px',
+                    border:'1px solid red',
+                    position:'absolute'
+                    
+                    }}>
+                    
+                    <input type="radio" /> Route
+        </div> */}
+          
+          <ReactFlow
+            nodes={nodes}
+            edges={showEdges ? edges : []}
+            elements={initialEdges}
+            onEdgeContextMenu={onEdgeContextMenu}
+            onNodeContextMenu={onNodeContextMenu}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect} 
+            // onEdgeClick={onEdgeClick}
+            // edgeTypes={{ edge.type }}
+            fitView
+            fitViewOptions={{ padding: 0.4, duration: 1000 }}
+            style={{ width: "100%", height: "100%" }}
+            connectionLineStyle={connectionLineStyle}
+          >
+            <Panel position="top-right">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "fixed",
+                  right: 10,
+                  top:60
+                }}
+              >
+                {/* <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => (
+                    <Tooltip {...props}>Vertical Layout</Tooltip>
+                  )}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    onClick={() => onLayout("TB")}
+                  >
+                    {" "}
+                    <FaRulerVertical />
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => (
+                    <Tooltip {...props}>Horizontal Layout</Tooltip>
+                  )}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    className="mt-2"
+                    variant="primary"
+                    onClick={() => onLayout("LR")}
+                  >
+                    {" "}
+                    <FaRulerHorizontal />
+                  </Button>
+                </OverlayTrigger> */}
+
+              <OverlayTrigger
+                      delay={{ hide: 450, show: 300 }}
+                      overlay={(props) => <Tooltip {...props}>Toggle Layout</Tooltip>}
+                      placement="left"
+                    >
+                  <Button style={{ width: "50px" }} onClick={onLayout}>
+                    {layoutDirection === "TB" ?  <FaRulerHorizontal />:<FaRulerVertical /> }
+                  </Button>
+              </OverlayTrigger>
+              {/* Other components */}
+                <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => <Tooltip {...props}>Add Node</Tooltip>}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    className="mt-2"
+                    variant="primary"
+                    onClick={onAddNode}
+                  >
+                    <FaPlus />
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => <Tooltip {...props}>Delete Node</Tooltip>}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    className="mt-2"
+                    variant="danger"
+                    onClick={deleteSelectedElements}
+                    // onClick={() => handleButtonDelete(edge.id)}
+                  >
+                    {" "}
+                    <FaTrash />
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => <Tooltip {...props}>Save</Tooltip>}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    className="mt-2"
+                    variant="primary"
+                    // onClick={handleNodes}
+                  >
+                    {" "}
+                    <FaSave/>
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  delay={{ hide: 450, show: 300 }}
+                  overlay={(props) => <Tooltip {...props}>Help</Tooltip>}
+                  placement="left"
+                >
+                  <Button
+                    style={{ width: "50px" }}
+                    className="mt-2"
+                    variant="primary"
+                  >
+                    {" "}
+                    <BsQuestionCircleFill/>
+                  </Button>
+                </OverlayTrigger>
+              </div>
+              <div>
+                <div style={{ position: "absolute", top: 208, right: 0 }}>
+                  {nodes.map((node) => (
+                    <div key={node.id} className="node">
+                      {/* <div>{node.data.label}</div> */}
+                      {/* Edit button */}
+                      {node.selected && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: "5px",
+                            marginRight: "-5px",
+                          }}
+                        >
+                          <OverlayTrigger
+                            delay={{ hide: 450, show: 300 }}
+                            overlay={(props) => (
+                              <Tooltip {...props}>Update Node</Tooltip>
+                            )}
+                            placement="left"
+                          >
+                            <Button
+                              className="edit-button mt-2"
+                              variant="primary"
+                              // size="sm"
+                              style={{ width: "50px" }}
+                              onClick={() => handleEditNode(node)}
+                            >
+                              <FaEdit></FaEdit>
+                            </Button>
+                          </OverlayTrigger>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ position: "absolute", top: 208, right: 0 }}>
+                  {edges.map((edge) => (
+                    <div key={edge.id} className="edge">
+                      {/* <div>{node.data.label}</div> */}
+                      {/* Edit button */}
+                      {edge.selected && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: "5px",
+                            marginRight: "-5px",
+                          }}
+                        >
+                          <OverlayTrigger
+                            delay={{ hide: 450, show: 300 }}
+                            overlay={(props) => (
+                              <Tooltip {...props}>Update Edge</Tooltip>
+                            )}
+                            placement="left"
+                          >
+                            <Button
+                              className="edit-button mt-2"
+                              variant="primary"
+                              // size="sm"
+                              style={{ width: "50px" }}
+                              onClick={() => handleEditEdge(edge)}
+                            >
+                              <FaEdit></FaEdit>
+                            </Button>
+                          </OverlayTrigger>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ position: "absolute", top: -22, right: -10 }}>
+                  {selectedNodeForEdit && (
+                    <NodeEditor
+                      node={selectedNodeForEdit}
+                      onCancel={handleNodeCancel}
+                      onSave={handleNodeSave}
+                    />
+                  )}
+                  {selectedEdgeForEdit && (
+                    <EdgeEditPopup 
+                    // edge = {selectedEdgeForEdit}
+                    onCancel = {handleEdgeCancel}
+                    onSave={handleEdgeSave}
+                    />
+                  )}
+                </div>
+              </div>
+            </Panel>
+            <Panel position="top-left">
+            <div className="hello" style={{backgroundColor:'whitesmoke'}}>
+              <div className="dropdown">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  id="dropdownMenuButton"
+                  // setShowRoutePopup(true)
+                  onClick={handleRouteClick}
+                >
+                  Route Planning
+                </button>
+              </div>
+
+              <label>
+                <input 
+                      type="radio" 
+                      name="options" 
+                      value="Nodes" 
+                      onChange={toggleEdgesVisibility}
+                      // checked={radioChecked}
+                      />&nbsp;
+                Nodes
+              </label>
+              <br />
+              <label>
+                <input type="radio" 
+                  name="options" 
+                  value="Employee Mapping"
+                  // onClick={toggleEMployeeMapping}
+                  />&nbsp;
+                Employee Mapping
+              </label>
+              <br />
+              <label>
+                <input type="radio" name="options" value="Shift Allocation" />&nbsp;
+                Shift Allocation
+              </label>
+            </div>
+            </Panel>
+            {/* <Controls /> */}
+            <Background variant="lines" />
+          </ReactFlow>
+          {/* <RoutePopup/> */}
+          {showNodePopup && (
+            <NodesPopup 
+             node={selectedNodess} 
+             onClose={onCloseNodePopup} 
+             onSave={onSaveNodePopup}
+             />
+          )}
+          {showPopup && (
+          <EdgePopup edge={selectedEdge}
+            onClose={onClosePopup}
+            onSave={onSavePopup}
+            />
+          )}
+          {showRoutePopup && (
+            <RoutePopup onCancel={onCloseRoute} onSave={onSaveRoute} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HomeComponent 
+
+

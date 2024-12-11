@@ -1,0 +1,150 @@
+.text-size {
+    font-size: 12px;
+
+}
+
+/* ensures the increment/decrement arrows always display */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+.close-tab {
+    position: relative;
+}
+
+.m-3.text-size {
+    float: right;
+}
+
+.close-icon {
+    position: absolute;
+    top: 0px;
+    /* right: 10px; */
+    padding: 0px 5px 0px 5px;
+    right: 0;
+    height: 30px;
+    font-size: 0px;
+    cursor: pointer;
+    color: rgb(238, 22, 22);
+}
+
+.close-icon:hover {
+    position: absolute;
+    top: 0px;
+    padding: 0px 5px 0px 5px;
+    right: 0;
+    height: 30px;
+    font-size: 1px;
+    color: rgb(245, 245, 245);
+    background-color: rgb(253, 13, 13);
+    cursor: pointer;
+}
+
+
+.close-icon-x {
+    position: absolute;
+    top: 0px;
+    /* right: 10px; */
+    padding: 0px 5px 0px 5px;
+    right: 0;
+    height: 40px;
+    font-size: 0px;
+    cursor: pointer;
+    margin-top: 0px;
+    color: rgb(238, 22, 22);
+}
+
+.close-icon-x:hover {
+    position: absolute;
+    top: 0px;
+    padding: 0px 5px 0px 5px;
+    right: 0;
+    height: 40px;
+    font-size: 1px;
+    color: rgb(253, 13, 13);
+
+    /* background-color: rgb(253, 13, 13); */
+    cursor: pointer;
+}
+
+
+.inactive-tab {
+    background-color: #34C759;
+    /* green color */
+    color: #fff;
+}
+
+.active-tab {
+    background-color: #fff;
+    /* normal color */
+    color: #333;
+    font-weight: bold;
+}
+
+.icon-size {
+    display: "inline-block"
+}
+
+body {
+    font-family: sans-serif;
+}
+
+.list li {
+    margin: 0.75rem 0;
+}
+
+.info {
+    color: rgb(0, 49, 0);
+    background-color: rgb(230, 246, 230);
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.accordion {
+    border-top: 1px solid #ccc;
+    margin-top: 1rem;
+}
+
+.item {
+    border-bottom: 1px solid #ccc;
+}
+
+.itemBtn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+    font-size: 1rem;
+    text-align: left;
+    color: #007bff;
+    background-color: transparent;
+    border: none;
+}
+
+.itemBtn:hover {
+    background-color: #f3f3f3;
+}
+
+.itemBtnExpanded {
+    background-color: #e7e7e7;
+}
+
+.itemContent {
+    transition: height 0.25s cubic-bezier(0, 0, 0, 1);
+}
+
+.itemPanel {
+    padding: 1rem;
+}
+
+.chevron {
+    margin-left: auto;
+    transition: transform 0.25s cubic-bezier(0, 0, 0, 1);
+}
+
+.itemBtnExpanded .chevron {
+    transform: rotate(180deg);
+}

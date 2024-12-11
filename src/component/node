@@ -1,0 +1,122 @@
+import { useEffect, useState } from "react";
+import Plot from "react-plotly.js";
+import axios from "axios";
+import { BASE_URL } from "../constants/apiConstants";
+
+function MachineGraphs({AllJobs }) {
+  const [batchmasterdata, setBatchMasterdata] = useState([]);
+  const [splitdate, setSplitDate] = useState([]);
+  const [color, setColor] = useState([]);
+  const [Combinedjobs, setCombinedjobs] = useState([]);
+
+  useEffect(() => {
+    const apiUrl = `${BASE_URL}/api/batchMaster`;
+    axios
+      .get(apiUrl)
+      .then((response) => {
+        console.log(response.data);
+        setBatchMasterdata(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    setCombinedjobs(AllJobs.map((job) =>job.jobId))
+    // Update splitdate array whenever dateandNode changes
+    setSplitDate(AllJobs.map((item) => item.date.split("-")[2]));
+    // Update color array whenever dateandNode changes
+    setColor(AllJobs.map((item) => (item.status === "Assigned" ? "blue" : "green")));
+  }, [AllJobs]);
+
+  // Create an object to store y values for each unique job ID on each day
+  const yValuesMap = {};
+
+  const PlannedJobs = AllJobs.filter((item) => item.status === "Assigned")
+  const CompletedJobs = AllJobs.filter((item) => item.activityType === "ON")
+
+  console.log(PlannedJobs,"****")
+  console.log(CompletedJobs,"****")
+
+  AllJobs.forEach((item) => {
+    const jobId = item.jobId;
+    const day = item.date.split("-")[2];
+    const y = item.jobId;
+    if (!yValuesMap[day]) {
+      yValuesMap[day] = {};
+    }
+    if (!yValuesMap[day][jobId]) {
+      yValuesMap[day][jobId] = [y];
+    } else {
+      yValuesMap[day][jobId].push(y + yValuesMap[day][jobId].length * 0.15); // Add a small offset
+    }
+  });
+
+  // Flatten the y values for plotting
+  const flattenedYValues = Object.values(yValuesMap).flatMap((day) =>
+    Object.values(day).flatMap((yValues) => yValues)
+  );
+
+
+  return (
+    <div
+      className="App"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <Plot
+        config={{ displaylogo: false, displayModeBar: false }}
+        data={[
+          {
+            x: splitdate,
+            y: flattenedYValues,
+            width: 1,
+            mode: "markers", // Display only markers without lines
+            marker: {
+              size: 8, // Adjust the size of markers as per your preference
+              color: color,
+            },
+            type: "scatter",
+          },
+        ]}
+        layout={{
+          width: 75, // Set width to 200px
+          height: 75, // Set height to
+          title: "",
+          margin: { t: 0, r: 0, b: 18, l: 0 }, // Set margins to 0
+          xaxis: {
+            title: {
+              text: "Date",
+              font: {
+                size: 4, // Specify font size for x-axis title
+              },
+            },
+            tickfont: {
+              size: 6, // Specify font size for x-axis ticks
+            },
+            tickangle: 0, // Specify the tick angle for x-axis values
+            // tickvals: splitdate, // Show tick values only where x values are present
+            dtick: 1, // Set dtick to 1 to show all x-axis values without intervals
+          },
+          yaxis: {
+            title: {
+              text: "", // No title for y-axis
+              showline: false, // Hide y-axis line
+            },
+          },
+          hoverlabel: {
+            font: { size: 6 },
+          },
+          dragmode: false, // Disable zooming and panning
+        }}
+      />
+    </div>
+  );
+}
+
+export default MachineGraphs;

@@ -1,0 +1,94 @@
+  #wrapper {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    overflow: hidden;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #container {
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  #sidebar {
+    height: 100%;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: lightgray;
+    border: 2px solid darkgray;
+    min-width: 0;
+  }
+  
+  #resizer {
+    /* flex-basis: 8px; */
+    height: 5px;
+    width: 100%;
+    position: fixed;
+    z-index: 2;
+    cursor: row-resize;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+    background: #333642;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  #rightresizer {
+    /* flex-basis: 8px; */
+    height: 100%;
+    width: 5px;
+    position: fixed;
+    z-index: 2;
+    cursor: col-resize;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+    background: #333642;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  #main {
+    flex-basis: 0;
+    flex-grow: 1;
+    min-width: 0;
+    background: lightblue;
+    height: 100%;
+    flex-direction: row;
+    position: relative;
+    display: flex;
+    margin: 0;
+    padding: 0;
+  }
+
+  table thead th tr {
+    font-size: small;
+  }
+  table tbody tr {
+    font-size: small;
+  }
+
+  #Facheck{
+    background-color:#034661;
+    color:#ffffff
+  }
+  #FaXmark{
+    background-color: #ffffff;
+    color: #034661;
+    border: 1px solid #034661;
+  }

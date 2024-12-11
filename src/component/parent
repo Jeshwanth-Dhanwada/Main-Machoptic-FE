@@ -1,0 +1,189 @@
+import { useEffect, useState } from "react";
+import Plot from "react-plotly.js";
+import axios from "axios";
+import { BASE_URL } from "../constants/apiConstants";
+
+function MachineGraphs({ AllJobs }) {
+  const [batchmasterdata, setBatchMasterdata] = useState([]);
+  const [splitdate, setSplitDate] = useState([]);
+  const [SplitPlannedDate, setSplitPlannedDate] = useState([]);
+  const [color, setColor] = useState([]);
+  const [Combinedjobs, setCombinedjobs] = useState([]);
+
+  useEffect(() => {
+    const apiUrl = `${BASE_URL}/api/batchMaster`;
+    axios
+      .get(apiUrl)
+      .then((response) => {
+        console.log(response.data);
+        setBatchMasterdata(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    setCombinedjobs(AllJobs.map((job) => job.jobId));
+    // Update splitdate array whenever dateandNode changes
+    setSplitDate(AllJobs.map((item) => item.date.split("-")[2]));
+    setSplitPlannedDate(AllJobs.map((item) => item.date.split("-")[2]));
+    // Update color array whenever dateandNode changes
+    setColor(AllJobs.map((item) => (item.status === "Assigned" ? "blue" : "green")));
+  }, [AllJobs]);
+
+  // Create an object to store y values for each unique job ID on each day
+  const CompletedjobValues = {};
+  const PlannedjobValues = {};
+
+  const PlannedJobs = AllJobs.filter((item) => item.status === "Assigned");
+  const CompletedJobs = AllJobs.filter((item) => item.activityType === "ON");
+
+  console.log(PlannedJobs,"%%")
+  console.log(CompletedJobs,"%%")
+
+  CompletedJobs.forEach((item) => {
+    const jobId = item.jobId;
+    const day = item.date.split("-")[2];
+    const y = item.jobId;
+    if (!CompletedjobValues[day]) {
+      CompletedjobValues[day] = {};
+    }
+    if (!CompletedjobValues[day][jobId]) {
+      CompletedjobValues[day][jobId] = [y];
+    } else {
+      CompletedjobValues[day][jobId].push(y + CompletedjobValues[day][jobId].length * 0.15); // Add a small offset
+    }
+  });
+
+  // Flatten the y values for plotting
+  const CompletedflattenedYValues = Object.values(CompletedjobValues).flatMap((day) =>
+    Object.values(day).flatMap((yValues) => yValues)
+  );
+
+  PlannedJobs.forEach((item) => {
+    const jobId = item.jobId;
+    const day = item.date.split("-")[2];
+    const y = item.jobId;
+    if (!PlannedjobValues[day]) {
+      PlannedjobValues[day] = {};
+    }
+    if (!PlannedjobValues[day][jobId]) {
+      PlannedjobValues[day][jobId] = [y];
+    } else {
+      PlannedjobValues[day][jobId].push(y + PlannedjobValues[day][jobId].length * 0.15); // Add a small offset
+    }
+  });
+
+  // Flatten the y values for plotting
+  const PlannedflattenedYValues = Object.values(PlannedjobValues).flatMap((day) =>
+    Object.values(day).flatMap((yValues) => yValues)
+  );
+
+  return (
+    <div
+      className="App"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <Plot
+        config={{ displaylogo: false, displayModeBar: false }}
+        data={[
+          {
+            x: splitdate,
+            y: CompletedflattenedYValues,
+            width: 1,
+            mode: "markers", // Display only markers without lines
+            marker: {
+              size: 8, // Adjust the size of markers as per your preference
+              color: "green", // Color for completed jobs
+            },
+            type: "scatter",
+            name: "Completed Jobs",
+          },
+        ]}
+        layout={{
+          width: 45, // Set width to 200px
+          height: 75, // Set height to
+          title: "Completed Jobs",
+          margin: { t: 0, r: 0, b: 18, l: 0 }, // Set margins to 0
+          xaxis: {
+            title: {
+              text: "Date",
+              font: {
+                size: 4, // Specify font size for x-axis title
+              },
+            },
+            tickfont: {
+              size: 6, // Specify font size for x-axis ticks
+            },
+            tickangle: 0, // Specify the tick angle for x-axis values
+            tickvals: splitdate, // Show tick values only where x values are present
+          },
+          yaxis: {
+            title: {
+              text: "", // No title for y-axis
+              showline: false, // Hide y-axis line
+            },
+          },
+          hoverlabel: {
+            font: { size: 6 },
+          },
+          dragmode: false, // Disable zooming and panning
+        }}
+      />
+      <Plot
+        config={{ displaylogo: false, displayModeBar: false }}
+        data={[
+          {
+            x: SplitPlannedDate,
+            y: PlannedflattenedYValues,
+            width: 1,
+            mode: "markers", // Display only markers without lines
+            marker: {
+              size: 8, // Adjust the size of markers as per your preference
+              color: "blue", // Color for planned jobs
+            },
+            type: "scatter",
+            name: "Planned Jobs",
+          },
+        ]}
+        layout={{
+          width: 45, // Set width to 200px
+          height: 75, // Set height to
+          title: "Planned Jobs",
+          margin: { t: 0, r: 0, b: 18, l: 0 }, // Set margins to 0
+          xaxis: {
+            title: {
+              text: "Date",
+              font: {
+                size: 4, // Specify font size for x-axis title
+              },
+            },
+            tickfont: {
+              size: 6, // Specify font size for x-axis ticks
+            },
+            tickangle: 0, // Specify the tick angle for x-axis values
+            tickvals: SplitPlannedDate, // Show tick values only where x values are present
+          },
+          yaxis: {
+            title: {
+              text: "", // No title for y-axis
+              showline: false, // Hide y-axis line
+            },
+          },
+          hoverlabel: {
+            font: { size: 6 },
+          },
+          dragmode: false, // Disable zooming and panning
+        }}
+      />
+    </div>
+  );
+}
+
+export default MachineGraphs;

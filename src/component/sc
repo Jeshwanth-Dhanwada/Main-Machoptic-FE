@@ -1,0 +1,621 @@
+import {
+  MomentSvelteGanttDateAdapter,
+  SvelteGantt,
+  SvelteGanttDependencies,
+  SvelteGanttTable,
+} from "svelte-gantt";
+import moment from "moment";
+import { useEffect, useRef, useState } from "react";
+import { color, style, transition } from "d3";
+import { FaSave } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa6";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { BASE_URL } from "../constants/apiConstants.js";
+import { v4 as uuidv4 } from 'uuid';
+import { getRowMaster, getTasksMaster } from "../api/shovelDetails.js";
+import Papa from 'papaparse';
+
+const SveltaTree = () => {
+
+  const [newTaskDataa, setNewtaskData] = useState([]);
+  const [taskMasterdata, settaskMasterdata] = useState([])
+  const [rowMasterdata, setrowMasterdata] = useState([])    
+
+  // Loading
+  const [loaded, setLoaded] = useState(false);
+
+  // const csvPath = "E:\\Minematics projects\\ManuOptic\\Manuoptic-Frontend\\public\\662f3bd5e1909a0002000011-sample data.csv";
+
+    // const [data, setData] = useState([]);
+
+    // useEffect(() => {
+    //     if (csvPath) {
+    //         fetch(csvPath)
+    //             .then(response => response.text())
+    //             .then(csvText => {
+    //                 Papa.parse(csvText, {
+    //                     header: true,
+    //                     dynamicTyping: true,
+    //                     complete: (results) => {
+    //                       console.log(results.data)
+    //                         setData(results.data);
+    //                     },
+    //                     error: (error) => {
+    //                         console.error('Error parsing CSV:', error);
+    //                     }
+    //                 });
+    //             })
+    //             .catch(error => console.error('Error fetching CSV:', error));
+    //     }
+    // }, [csvPath]);
+
+    // console.log(data,"exceldata")
+
+    const [data, setData] = useState([]);
+    const [error, setError] = useState(null);
+
+    const csvPath = "/662f3bd5e1909a0002000011-sample data.csv"
+    useEffect(() => {
+        const handleParse = () => {
+            fetch(csvPath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    const csv = Papa.parse(csvText, {
+                        header: true,
+                    });
+                    console.log("Incoming")
+                    const parsedData = csv?.data;
+                    console.log(parsedData,"77");
+                    const updatedData = parsedData.map(obj => {
+                        Object.keys(obj).forEach(key => {
+                            if (obj[key] === '') {
+                                obj[key] = null;
+                            }
+                        });
+                        return obj;
+                    });
+                    setData(updatedData);
+                    const newParsedData = {
+                        newBatch: parsedData
+                    };
+                    console.log(newParsedData, "newParsedData");
+                })
+                .catch(error => {
+                    console.error('Error fetching or parsing CSV:', error);
+                    setError(`Error fetching or parsing CSV: ${error.message}`);
+                });
+        };
+
+        handleParse();
+    }, [csvPath]);
+
+    console.log(data,"88")
+
+  // Time
+  function time(input) {
+    return moment(input, "HH:mm");
+  }
+
+  // Start & End
+  const currentStart = time("6:00");
+  const currentEnd = time("18:00");
+
+  // Time ranges
+  const timeRanges = [
+    {
+      id: 0,
+      from: time("10:00"),
+      to: time("12:00"),
+      classes: null,
+      label: "Lunch",
+      resizable: false,
+    },
+    {
+      id: 1,
+      from: time("15:00"),
+      to: time("17:00"),
+      classes: null,
+      label: "Dinner",
+    },
+  ];
+ 
+
+  // Datas to load
+  const ganttdata = {
+    rows: [],
+    tasks: [],
+    dependencies: [
+      // {
+      //   id: 1,
+      //   fromId:10,
+      //   toId:4,
+      //   stroke :'black',
+      //   // eg. 'red' or '#ff0000'
+      //   strokeWidth : 4,
+      //   // arrowSize :5
+      // }
+    ],
+  };
+
+const zoomLevels = [
+  // {
+  //   headers: [
+  //     { unit: "week", format: "w" },
+  //     // { unit: "day", format: "MMMM Do" },
+  //     { unit: "hour", format: "ddd D/MMMM, H" }
+  //   ],
+  //   minWidth: 800,
+  //   fitWidth: false
+  // },
+  // {
+  //   headers: [
+  //     { unit: "day", format: "MMMM Do" },
+  //     { unit: "week", format: "w" },
+  //   ],
+  //   minWidth: 1600,
+  //   fitWidth: false
+  // },
+  {
+    headers: [
+      { unit: "day", format: "MMMM Do" },
+      // { unit: "hour", format: "ddd D/M, H" }
+      { unit: "hour", format: "ddd, H" }
+    ],
+    minWidth: 2400,
+    fitWidth: false
+  },
+  {
+    headers: [
+        { unit: 'hour', format: 'ddd D/MMMM' },
+        { unit: "minute", format: 'H:m',classes: "gantt-header",}
+    ],
+    minWidth: 10000,
+    fitWidth: false,
+  }
+];
+console.log(ganttdata.tasks,"ttttask")
+
+  // Gantt options
+  const options = {
+    dateAdapter: new MomentSvelteGanttDateAdapter(moment),
+    rows: ganttdata.rows,
+    tasks: ganttdata.tasks,
+    dependencies: ganttdata.dependencies,
+    // classes:'gantt-header',
+    timeRanges,
+    columnOffset: 15,
+    magnetOffset: 15,
+    rowHeight: 30,
+    rowPadding: 6,
+    fitWidth: true,
+    minWidth: 800,
+    from: currentStart,
+    to: currentEnd,
+    tableHeaders: [
+      { title: "Label", property: "label", width: 140, type: "tree",color:'red' },
+    ],
+    tableWidth: 10,
+    ganttTableModules: [SvelteGanttTable],
+    ganttBodyModules: [SvelteGanttDependencies],
+    enableCreateTask :false,
+    zoomLevels : zoomLevels,
+    zoomFactor: 50,  // Increase or decrease this value to control zoom speed
+    onCreateTask: ({ from, to, resourceId }) => {
+      console.log("Incoming")
+      // Return the new task model
+      return {
+        id: uuidv4(), // Generate a unique ID
+        resourceId,
+        label: 'New Task',
+        from,
+        to,
+        classes: 'new-task-class',
+      };
+    },
+    onCreatedTask: (task) => {
+      // Handle the newly created task
+      console.log('Task created:', task);
+      setNewtaskData([...newTaskDataa, task])
+      // setDeviceMapping([...DeviceMapping, deviceNode]);
+      // You can update the state or make an API call here
+    },
+  };
+
+  // useEffect(() => {
+  //   // Fetch data from the API when the component mounts
+  //   const apiUrl = `${BASE_URL}/api/rows`;
+  //   axios
+  //     .get(apiUrl)
+  //     .then((response) => {
+  //       console.log(response.data,"rows")
+  //       setData(response.data);
+  //       let x = [];
+  //       for (let index = 0; index < response.data.length; index++) {
+  //         const data = response.data[index];
+  //         console.log(data,"responsedata")
+  //         x.push({
+  //             id: data.id,
+  //             label: data.label,
+  //             class: data.class,
+  //             iconClass: data.iconClass
+  //           })
+  //         }
+  //         setrowMasterdata(x)
+  //         if (!loaded ) {
+  //           const {rows, ...restOptions} = options
+  //           console.log(options,"restOptions")
+  //           // Create Gantt
+  //           new SvelteGantt({
+  //             target: document.getElementById("example-gantt"),
+  //             props: {...restOptions, rows : x},
+  //           });
+  //           setLoaded(true) ;
+  //         }
+  //       }
+  //     )
+  //     .catch((error) => {
+  //       console.error("Error fetching data:", error);
+  //     });
+    
+  // }, [loaded]);
+
+  // useEffect(() => {
+  //   // Fetch data from the API when the component mounts
+  //   const apiUrl = `${BASE_URL}/api/tasks`;
+  //   axios
+  //     .get(apiUrl)
+  //     .then((response) => {
+  //       console.log(response.data,"rows")
+  //       setData(response.data);
+  //       let x = [];
+  //       for (let index = 0; index < response.data.length; index++) {
+  //         const data = response.data[index];
+  //         console.log(data,"responsedata")
+  //         x.push({
+  //           id: data.id,
+  //           resourceId: data.resourceId,
+  //           label: data.label,
+  //           from: time(data.from),
+  //           to: time(data.to),
+  //           classes: data.classes,
+  //           })
+  //         }
+  //         // setrowMasterdata(x)
+  //         if (!loaded ) {
+  //           const {tasks, ...restOptions} = options
+  //           console.log(options,"restOptions")
+  //           // Create Gantt
+  //           new SvelteGantt({
+  //             target: document.getElementById("example-gantt"),
+  //             props: {...restOptions, tasks : x},
+  //           });
+  //           setLoaded(true) ;
+  //         }
+  //       }
+  //     )
+  //     .catch((error) => {
+  //       console.error("Error fetching data:", error);
+  //     });
+    
+  // }, [loaded]);
+
+  useEffect(() => {
+    // Fetch data from the API when the component mounts
+    const fetchData = async () => {
+      try {
+        const [rowsResponse, tasksResponse] = await Promise.all([
+          axios.get(`${BASE_URL}/api/rows`),
+          axios.get(`${BASE_URL}/api/tasks`),
+        ]);
+
+        // Process row data
+        const rowsData = rowsResponse.data.map(data => ({
+          id: data.id,
+          label: data.label,
+          class: data.class,
+          iconClass: data.iconClass,
+        }));
+
+        // Process task data
+        const tasksData = tasksResponse.data.map(data => ({
+          id: parseInt(data.id),
+          resourceId: data.resourceId,
+          label: data.label,
+          from: time(data.from),
+          to: time(data.to),
+          classes: data.classes,
+        }));
+
+        setrowMasterdata(rowsData);
+        settaskMasterdata(tasksData);
+
+        if (!loaded) {
+          const { rows,tasks,  ...restOptions } = options;
+          // 
+          // Create Gantt
+          new SvelteGantt({
+            target: document.getElementById("example-gantt"),
+            props: { ...restOptions, rows: rowsData,tasks: tasksData  },
+            // 
+            
+          });
+
+          setLoaded(true);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [loaded]);
+  
+  const handleSave = () => {
+    console.log("Save button clicked");
+
+    // const Rowspayload = {
+    //   rowMaster:ganttdata.rows.map((item, index) => (
+    //     {
+    //       id:item.id.toString(),
+    //       enableDragging :true,
+    //       enableResize :true,
+    //       label : item.label,
+    //       class: item.class,
+    //       children  :'',
+    //       expanded  :true,
+    //       iconClass :item.iconClass,
+    //       userId: "1111",
+    //   }
+    // ))
+    // };
+    // console.log(Rowspayload, "payload");
+    console.log(newTaskDataa.map((item, index) => (item)))
+    function ConvertInToHours(item){
+      console.log(item)
+      const fromtimestamp = item;
+      const date = new Date(fromtimestamp);
+
+      const hours = date.getUTCHours();
+      const minutes = date.getUTCMinutes();
+
+      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      console.log(formattedTime);
+      return formattedTime
+    }
+    const Taskspayload = {
+      taskMaster:newTaskDataa.map((item, index) => (
+        {
+          amountDone : item.model.amountDone,
+          from : ConvertInToHours(item.model.from),
+          to : ConvertInToHours(item.model.to),
+          label : item.model.label,
+          enableDragging : item.model.enableDragging,
+          enableResize : item.model.enableResize,
+          resourceId:item.model.resourceId,
+          classes:item.model.classes,
+          userId: "1111",
+          id:item.model.id
+
+          // amountDone : item.amountDone,
+          // from : item.from._i,
+          // to : item.to._i,
+          // label : item.label,
+          // enableDragging : item.enableDragging,
+          // enableResize : item.enableResize,
+          // resourceId : item.resourceId,
+          // classes : item.classes,
+          // userId : item.userId,
+          // id : item.id.toString(),
+      }
+    ))
+    };
+    console.log(Taskspayload, "Tpayload");
+
+    // axios
+    //   .put(`${BASE_URL}/api/rows/bulk`, Rowspayload)
+    //   .then((response) => {
+    //     console.log("Data saved successfully", response.data);
+    //     toast.success(
+    //       <span>
+    //         <strong>successfully</strong> Updated.
+    //       </span>,
+    //       {
+    //         position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
+    //         className: 'custom-toast' // Optional: Add custom CSS class
+    //       }
+    //     );
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error saving data:", error);
+    //   });
+
+    axios
+      .put(`${BASE_URL}/api/tasks/bulk`, Taskspayload)
+      .then((response) => {
+        console.log("Data saved successfully", response.data);
+        toast.success(
+          <span>
+            <strong>successfully</strong> Updated.
+          </span>,
+          {
+            position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
+            // autoClose: 3000, // Optional: Set auto close time in milliseconds
+            // closeButton: false, // Optional: Hide close button
+            className: 'custom-toast' // Optional: Add custom CSS class
+          }
+        );
+      })
+      .catch((error) => {
+        console.error("Error saving data:", error);
+      });
+
+  };
+
+  const handleDelete = () => {
+    // Implement delete functionality here
+    console.log("Delete button clicked");
+  };
+  console.log(newTaskDataa)
+  console.log(typeof newTaskDataa)
+
+  return (
+    <>
+      <>
+      <div id="example-gantt"></div>
+      <button className="btn btn-primary m-1" onClick={handleSave}><FaSave /></button>&nbsp;
+      <button className="btn btn-danger" onClick={handleDelete}><FaTrash /></button>
+    </>
+    </>
+  );
+};
+
+export default SveltaTree;
+
+
+//  [
+    //   {
+    //     id: 1,
+    //     resourceId: 10,
+    //     label: "LPCVD",
+    //     from: time("9:00"),
+    //     to: time("11:00"),
+    //     classes: "orange",
+    //   },
+    //   {
+    //     id: 2,
+    //     resourceId: 12,
+    //     label: "Entrepreneurship",
+    //     from: time("10:00"),
+    //     to: time("12:30"),
+    //     classes: "orange",
+    //   },
+    //   {
+    //     id: 3,
+    //     resourceId: 13,
+    //     label: "PET-CT",
+    //     from: time("13:30"),
+    //     to: time("15:00"),
+    //     classes: "orange",
+    //   },
+    //   {
+    //     id: 4,
+    //     resourceId: 14,
+    //     label: "Auditing",
+    //     from: time("9:30"),
+    //     to: time("11:30"),
+    //     classes: "orange",
+    //   },
+    //   {
+    //     id: 5,
+    //     resourceId: 21,
+    //     label: "Security Clearance",
+    //     from: time("15:15"),
+    //     to: time("16:00"),
+    //     classes: "green",
+    //   },
+    //   {
+    //     id: 6,
+    //     resourceId: 22,
+    //     label: "Policy Analysis",
+    //     from: time("14:00"),
+    //     to: time("17:00"),
+    //     classes: "blue",
+    //   },
+    //   {
+    //     id: 7,
+    //     resourceId: 23,
+    //     label: "Xbox 360",
+    //     from: time("13:30"),
+    //     to: time("14:30"),
+    //     classes: "blue",
+    //   },
+    //   {
+    //     id: 8,
+    //     resourceId: 3,
+    //     label: "GNU/Linux",
+    //     from: time("14:00"),
+    //     to: time("15:30"),
+    //     classes: "blue",
+    //   },
+    //   {
+    //     id: 9,
+    //     resourceId: 4,
+    //     label: "Electronic Trading",
+    //     from: time("15:00"),
+    //     to: time("17:00"),
+    //     classes: "green",
+    //   },
+    //   {
+    //     id: 10,
+    //     resourceId: 5,
+    //     label: "Alternative Medicine",
+    //     from: time("14:30"),
+    //     to: time("15:30"),
+    //     classes: "orange",
+    //   },
+    // ],
+
+     // [ 
+    //   {
+    //     id: 10,
+    //     label: "Accounting",
+    //     class: "row-group",
+    //     iconClass: "fas fa-calculator",
+    //       // children: [
+    //       //   {
+    //       //     id: 11,
+    //       //     label: "Petunia Mulliner",
+    //       //   },
+    //       //   {
+    //       //     id: 12,
+    //       //     label: "Mélina Giacovetti",
+    //       //   },
+    //       //   {
+    //       //     id: 13,
+    //       //     label: "Marlène Lasslett",
+    //       //   },
+    //       //   {
+    //       //     id: 14,
+    //       //     label: "Adda Youell",
+    //       //   },
+    //       // ],
+    //   },
+    //   {
+    //     id: 20,
+    //     label: "Business Development",
+    //     class: "row-group",
+    //     iconClass: "fas fa-user-tie",
+    //     // children: [
+    //     //   {
+    //     //     id: 21,
+    //     //     label: "Pietra Fallow",
+    //     //   },
+    //     //   {
+    //     //     id: 22,
+    //     //     label: "Mariellen Torbard",
+    //     //   },
+    //     //   {
+    //     //     id: 23,
+    //     //     label: "Renate Humbee",
+    //     //   },
+    //     // ],
+    //   },
+    //   {
+    //     id: 3,
+    //     label: "Ida Flewan",
+    //   },
+    //   {
+    //     id: 4,
+    //     label: "Lauréna Shrigley",
+    //   },
+    //   {
+    //     id: 5,
+    //     label: "Ange Kembry",
+    //   },
+    // ],

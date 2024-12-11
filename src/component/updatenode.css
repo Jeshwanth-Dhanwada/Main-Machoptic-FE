@@ -1,0 +1,90 @@
+.updatenode__controls {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 4;
+    font-size: 12px;
+  }
+  
+  .updatenode__controls label {
+    display: block;
+  }
+  
+  .updatenode__bglabel {
+    margin-top: 10px;
+  }
+  
+  .updatenode__checkboxwrapper {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* updatenode.css */
+.custom-node {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+}
+
+.add-node-button {
+  margin-left: 10px;
+  padding: 2px 5px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+}
+
+.react-flow .react-flow__handle {
+  width: 5px;
+  height: 4px;
+  border-radius: 3px;
+  background-color: #784be8;
+}
+
+.react-flow .react-flow__handle-top {
+  top: -10px;
+}
+
+.react-flow .react-flow__handle-bottom {
+  bottom: -10px;
+}
+
+.react-flow .react-flow__node {
+  height: 40px;
+  width: 150px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  border-width: 2px;
+  font-weight: 700;
+}
+
+.react-flow .react-flow__edge path,
+.react-flow__connectionline path {
+  stroke-width: 2;
+}
+
+.wrapper {
+  flex-grow: 1;
+  height: 100%;
+}
+
+/*  expand/collapse transition effect*/
+.expanding {
+  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  transform: scale(1);
+  opacity: 0;
+}
+
+.expanding.expanded {
+  transform: scale(1);
+  opacity: 1;
+}
+  
