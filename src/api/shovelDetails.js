@@ -468,3 +468,17 @@ export const getUnitsdata = () => {
             });
     })
 }
+
+export const getNodesForIcons = () => {
+    const apiUrl = `${BASE_URL}/api/nodeMaster`;
+    return new Promise((resolve, reject) => {
+        axios.get(apiUrl)
+            .then((response) => {
+                resolve(response.data)
+            })
+            .catch((error) => {
+                console.error('Error fetching data:', error);
+                reject()
+            });
+    })
+}

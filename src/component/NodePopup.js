@@ -955,12 +955,12 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
             </div>
 
             <div className="col-2 p-2">
-              <label>Border Width</label>
+              <label>Font-Style</label>
               <select
                 style={{ height: "32px" }}
                 value={fontStyle}
                 onChange={handleFontstyle}
-                className="form-control"
+                className="form-select"
               >
                 <option value={fontStyle}>{fontStyle}</option>
                 <option>italic</option>
@@ -1041,7 +1041,7 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
                 style={{ height: "32px" }}
                 value={borderStyle}
                 onChange={handleborderStyle}
-                className="form-control"
+                className="form-select"
               >
                 <option value={borderStyle}>{borderStyle}</option>
                 <option>solid</option>
@@ -1050,7 +1050,7 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
               </select>
             </div>
             <div className="col-2 p-2">
-              <label>Font-Style</label>
+              <label>Border Width</label>
               <input
                 type="text"
                 className="form-control"
