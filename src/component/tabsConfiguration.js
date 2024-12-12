@@ -57,7 +57,9 @@ export default function BasicConfigurationTabs({
   sidetobottompanel,
   onClick,
   nodeIdselected,
-  tableHeight
+  tableHeight,
+  setNewNodes
+  
 }) {
   const [value, setValue] = useState(0);
   console.log(tableHeight,"tableHeight")
@@ -101,6 +103,12 @@ export default function BasicConfigurationTabs({
     console.log(item,"checkk");
     onClick(item);
   }
+
+  // const [newNodes, setNewNodes] = useState()
+  const HandleNodestoOperations = (nodes) => {
+    setNewNodes(nodes)
+    console.log(nodes)
+  }
   return (
     <div className="container-fluid">
         <div className="row">
@@ -132,7 +140,7 @@ export default function BasicConfigurationTabs({
                 />
             </CustomTabPanel>
             <CustomTabPanel value={value} index={2}>
-              <StaffAllocation tableHeight = {tableHeight}/>
+              <StaffAllocation tableHeight = {tableHeight} sendtoConfigurations = {HandleNodestoOperations}/>
             </CustomTabPanel>
             <CustomTabPanel value={value} index={3}>
               RM Mapping

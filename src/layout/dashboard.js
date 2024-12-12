@@ -177,6 +177,12 @@ function DashboardLayout(props) {
     setDateFilter(date)
   }
 
+  const [datafromStaffToshowRoutes,setNewNodes] = useState()
+  const HandleStaffToshowRoutes = (item) => {
+    setNewNodes(item)
+    console.log(item)
+  }
+
   // const HandleMultipleJobsToRoutes = (multipleJobs) => {
   //   console.log(multipleJobs,)
   // }
@@ -271,6 +277,7 @@ function DashboardLayout(props) {
                 sidetobottompanel={sidetobottompanel}
                 onClick={HandleBottomtoRight}
                 tableHeight={tableHeight}
+                setNewNodes = {HandleStaffToshowRoutes}
               />
             )}
             {selectedMenuItem === "Planning" && (
@@ -389,6 +396,7 @@ function DashboardLayout(props) {
                       HandlesetdataToBottomJobPriorPanel
                     }
                     sendtoRoutes={sendtoRoutes}
+                    datafromdatafromchild = {datafromStaffToshowRoutes}
                   />
                 }
               />

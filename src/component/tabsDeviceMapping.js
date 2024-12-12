@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { getDeviceMapping, getDeviceMaster, getNodeMaster } from "../api/shovelDetails";
 
 import Button from "@mui/material/Button";
@@ -15,9 +15,11 @@ import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
 import { Backdrop, CircularProgress, Tooltip } from '@mui/material';
 import { NODE_WIDTH, NODE_HEIGHT } from "../constants/chartlConstants.js";
+import AuthContext from "../context/AuthProvider.js";
 
 
 function DeviceMapping({tableHeight}) {
+  const {auth} = useContext(AuthContext)
   const [DeviceMapping, setDeviceMapping] = useState([]);
   const [Devices, setDevices] = useState([]);
   const [nodesdata, setnodesdata] = useState([]);
@@ -143,8 +145,8 @@ function DeviceMapping({tableHeight}) {
     const edite = {
       deviceId: editedItem.deviceId,
       nodeId: editedItem.nodeId,
-      branchId: editedItem.branchId,
-      userId: editedItem.userId,
+      branchId: auth.branchId.toString(),
+      userId: auth.empId.toString(),
     }
     axios
       .put(`${BASE_URL}/api/deviceMapping/${editedItem.Id}`, edite)
@@ -157,8 +159,6 @@ function DeviceMapping({tableHeight}) {
           </span>,
           {
             position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
-            // autoClose: 3000, // Optional: Set auto close time in milliseconds
-            // closeButton: false, // Optional: Hide close button
             className: 'custom-toast' // Optional: Add custom CSS class
           }
         );
@@ -197,8 +197,6 @@ function DeviceMapping({tableHeight}) {
           <span><strong>Deleted</strong> successfully.</span>,
           {
             position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
-            // autoClose: 3000, // Optional: Set auto close time in milliseconds
-            // closeButton: false, // Optional: Hide close button
             className: 'custom-toast' // Optional: Add custom CSS class
           }
         );
@@ -210,8 +208,6 @@ function DeviceMapping({tableHeight}) {
         console.error("Error deleting node:", error,
           {
             position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
-            // autoClose: 3000, // Optional: Set auto close time in milliseconds
-            // closeButton: false, // Optional: Hide close button
             className: 'custom-toast' // Optional: Add custom CSS class
           }
         );
@@ -317,8 +313,8 @@ function DeviceMapping({tableHeight}) {
     const payload = {
       deviceId: deviceId,
       nodeId: nodeId,
-      branchId: "1001",
-      userId: "1111",
+      branchId: auth.branchId.toString(),
+      userId: auth.empid.toString(),
     }
     console.log(payload);
     axios
@@ -329,8 +325,6 @@ function DeviceMapping({tableHeight}) {
           <span><strong>Successfully! </strong> Added.</span>,
           {
             position: toast.POSITION.BOTTOM_RIGHT, // Set position to top center
-            // autoClose: 3000, // Optional: Set auto close time in milliseconds
-            // closeButton: false, // Optional: Hide close button
             className: 'custom-toast' // Optional: Add custom CSS class
           }
         );
@@ -339,7 +333,6 @@ function DeviceMapping({tableHeight}) {
         showDeviceMapping()
         setDeviceId("");
         setnodeId("");
-        window.location.reload();
       })
       .catch((error) => {
         console.error('Error adding new row:', error);

@@ -20,7 +20,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import { Backdrop, CircularProgress, Tooltip } from "@mui/material";
 import AuthContext from "../context/AuthProvider";
 
-function StaffAllocation({tableHeight}) {
+function StaffAllocation({tableHeight,sendtoConfigurations}) {
   const { auth } = useContext(AuthContext);
   const [EmpNodeMapping, setEmpNodeMapping] = useState([]);
   const [Employeedata, setEmployeedata] = useState([]);
@@ -31,7 +31,6 @@ function StaffAllocation({tableHeight}) {
   const showEmpNodeMapping = async (key) => {
     setOpenLoader(true);
     const responsedata = await getEmpNodeMapping();
-    console.log("response data:", responsedata);
     setEmpNodeMapping(responsedata, key);
     setOpenLoader(false);
   };
@@ -157,11 +156,11 @@ function StaffAllocation({tableHeight}) {
 
   const [isNewRowActive, setNewRowActive] = useState(false);
   const handleAddNewRow = () => {
-    setNewRowActive(true);
+    setNewRowActive(!isNewRowActive);
   };
 
-  const [empId, setempId] = useState([]);
-  const [nodeId, setnodeId] = useState([]);
+  const [empId, setempId] = useState("");
+  const [nodeId, setnodeId] = useState("");
 
   const handleEmpId = (e) => {
     setempId(e.target.value);
@@ -192,16 +191,17 @@ function StaffAllocation({tableHeight}) {
       itemDescription: "",
       nodeType: "employee",
       nodeName: getEmployeeNamebyId(empId),
-      xPosition: 0,
-      yPosition: getEmployeeNodePosition(nodeId),
+      xPosition: -48,
+      // yPosition: getEmployeeNodePosition(nodeId),
+      yPosition: -41,
       type: "iconNode",
       parentNode: getParentNode(nodeId),
       extent: "parent",
       sourcePosition: "right",
       targetPosition: "left",
       iconId: empId,
-      width: "10",
-      height: "10",
+      width: "20",
+      height: "20",
       borderColor: "",
       borderStyle: "",
       borderWidth: "",
@@ -209,8 +209,8 @@ function StaffAllocation({tableHeight}) {
       FontStyle: "",
       borderRadius: "",
       FontColor: "",
-      branchId: "1001",
-      userId: "1111",
+      branchId: auth.branchId.toString(),
+      userId: auth.empId.toString(),
       isRootNode: false,
       fillColor: "",
       fillTransparency: "",
@@ -220,12 +220,14 @@ function StaffAllocation({tableHeight}) {
       fuelUnitsId: "Fuel Units ID",
       capacity: "Capacity Value",
       capacityUnitsId: "Capacity Units ID",
+      date:getDate()
     };
     console.log(deviceNode);
     axios
       .post(`${BASE_URL}/api/nodeMaster`, deviceNode)
       .then((response) => {
         console.log(response.data);
+        sendtoConfigurations(deviceNode)
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -240,6 +242,12 @@ function StaffAllocation({tableHeight}) {
       "0"
     )}-${String(today.getDate()).padStart(2, "0")}`;
   };
+
+  const EmptyFields = () => {
+    setnodeId("");
+    setempId("");
+    setNewRowActive(false);
+  }
 
   const handleNewRowSubmit = () => {
     const payload = {
@@ -260,15 +268,16 @@ function StaffAllocation({tableHeight}) {
         console.log("New row added successfully", response.data);
         toast.success(
           <span>
-            <strong>Successfully! </strong> Added.
-          </span>
+            <strong>Successfully! </strong> Added
+            </span>,
+            {
+              position: toast.POSITION.BOTTOM_RIGHT,
+              className: "custom-toast",
+            }
         );
         handleCreateNode(nodeId, empId);
-        setNewRowActive(false);
+        EmptyFields()
         showEmpNodeMapping();
-        setnodeId("");
-        setempId("");
-        // window.location.reload();
       })
       .catch((error) => {
         console.error("Error adding new row:", error);
@@ -350,6 +359,69 @@ function StaffAllocation({tableHeight}) {
               </tr>
             </thead>
             <tbody className=" overflowY:'auto'">
+            {isNewRowActive === true &&(
+                <tr>
+                  <td></td>
+                  <td colSpan={2}>
+                    <select
+                      value={empId}
+                      onChange={handleEmpId}
+                      style={{
+                        border: "none",
+                        width: "200px",
+                        height: "20px",
+                        backgroundColor: "whitesmoke",
+                      }}
+                    >
+                      <option hidden>Employee Id</option>
+                      {Employeedata?.map((item) => (
+                        <option value={item?.empId}>
+                          {item?.empId} - {item?.employeeName}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td colSpan={2}>
+                    <select
+                      style={{
+                        border: "none",
+                        width: "200px",
+                        height: "20px",
+                        backgroundColor: "whitesmoke",
+                      }}
+                      value={nodeId}
+                      onChange={handlenodeId}
+                    >
+                      <option hidden>Node Id</option>
+                      {nodedata
+                        .filter((item) => item.nodeType === "Machine")
+                        .map((item) => (
+                          <option value={item.nodeId}>
+                            {item.nodeId} - {item.nodeName}
+                          </option>
+                        ))}
+                    </select>
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td style={{textAlign:'center'}}>
+                    <button
+                      style={{ border: "none", background: "transparent" }}
+                      onClick={handleNewRowSubmit}
+                    >
+                      <FaCheck style={{ color: "green" }} />
+                    </button>
+                    &nbsp;
+                    <button
+                      style={{ border: "none", background: "transparent" }}
+                      onClick={() => setNewRowActive(false)}
+                    >
+                      <FaXmark style={{ color: "red" }} />
+                    </button>
+                  </td>
+                </tr>
+              )}
               {searchInput.length > 0
                 ? filteredResults.map((item, index) => (
                     <tr>
@@ -614,9 +686,9 @@ function StaffAllocation({tableHeight}) {
                               backgroundColor: "whitesmoke",
                             }}
                           >
-                            <option hidden>Primary</option>
-                            <option value="True">Primary</option>
-                            <option value="False">Secondary</option>
+                            <option hidden>Default</option>
+                            <option value="True">Yes</option>
+                            <option value="False">No</option>
                           </select>
                         ) : (
                           <div>{item.primary}</div>
@@ -735,69 +807,7 @@ function StaffAllocation({tableHeight}) {
                       </td>
                     </tr>
                   ))}
-              {isNewRowActive && (
-                <tr>
-                  <td></td>
-                  <td colSpan={2}>
-                    <select
-                      style={{
-                        border: "none",
-                        width: "200px",
-                        height: "20px",
-                        backgroundColor: "whitesmoke",
-                      }}
-                      value={empId}
-                      onChange={handleEmpId}
-                    >
-                      <option hidden>Employee Id</option>
-                      {Employeedata.map((item) => (
-                        <option value={item.empId}>
-                          {item.empId} - {item.employeeName}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td colSpan={2}>
-                    <select
-                      style={{
-                        border: "none",
-                        width: "200px",
-                        height: "20px",
-                        backgroundColor: "whitesmoke",
-                      }}
-                      value={nodeId}
-                      onChange={handlenodeId}
-                    >
-                      <option hidden>Node Id</option>
-                      {nodedata
-                        .filter((item) => item.nodeType === "Machine")
-                        .map((item) => (
-                          <option value={item.nodeId}>
-                            {item.nodeId} - {item.nodeName}
-                          </option>
-                        ))}
-                    </select>
-                  </td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td style={{textAlign:'center'}}>
-                    <button
-                      style={{ border: "none", background: "transparent" }}
-                      onClick={handleNewRowSubmit}
-                    >
-                      <FaCheck style={{ color: "green" }} />
-                    </button>{" "}
-                    &nbsp;
-                    <button
-                      style={{ border: "none", background: "transparent" }}
-                      onClick={() => setNewRowActive(false)}
-                    >
-                      <FaXmark style={{ color: "red" }} />
-                    </button>
-                  </td>
-                </tr>
-              )}
+              
             </tbody>
           </table>
 

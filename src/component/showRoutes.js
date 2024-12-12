@@ -207,7 +207,9 @@ const ShowRoutes = ({
   setdataToBottomJobPriorPanel,
   sendtoRoutes,
   setSelectedId,
+  datafromdatafromchild
 }) => {
+  console.log(datafromdatafromchild)
   const { fitView, addNodes } = useReactFlow();
   const [selectedNodeForEdit, setSelectedNodeForEdit] = useState(null);
   const [showGraph, setshowGraph] = useState(false);
