@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { getEdges, getNodeMaster, getRoutes } from "../api/shovelDetails";
-import ShowRoutes from "./showRoutes";
 import { FaCheck, FaMinus, FaXmark } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { BASE_URL } from "../constants/apiConstants";
 import axios from "axios";
 import { Form } from "react-bootstrap";
+import AuthContext from "../context/AuthProvider";
 
-function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
+function Edgesdata({ RoutedatafromEdge, onClick, tableHeight,sendtoConfigurations}) {
+  const {auth} = useContext(AuthContext)
   const [edgesdata, setedgesdata] = useState([]);
   const [Nodedata, setNodedata] = useState([]);
   const [Routedata, setRoutedata] = useState([]);
   const [PercentInput, setPercentInput] = useState([]);
-  const [tableHeightt, settableHeightt] = useState();
 
   const showEdges = async (key) => {
     const responsedata = await getEdges();
@@ -32,11 +32,12 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
   };
 
   useEffect(() => {
-    showEdges();
-    showNodes();
-    showRoutes();
-    settableHeightt(tableHeight)
-  }, []);
+    if(RoutedatafromEdge){
+      showEdges();
+      showNodes();
+      showRoutes();
+    }
+  }, [RoutedatafromEdge]);
 
   const sendDataToParent = (selectededge) => {
     onClick(selectededge)
@@ -44,9 +45,9 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
 
 
   const [editedIndex, setEditedIndex] = useState(null);
-  const handleEdit = (index) => {
+  const handleEdit = (index,Id) => {
     setEditedIndex(index);
-    console.log("indexid:",index );
+    console.log(index,Id,"idcheck")
   };
   const removeEdit = (index) => {
     setEditedIndex(null);
@@ -67,35 +68,28 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
       label: editedItem.label,
       edgeColor: editedItem.edgeColor,
       edgeThickness: editedItem.edgeThickness,
-      // type:editedItem.ArrowClosed,
-      // width:15,
-      // height:15,
-      // color:"#000",
       arrow: editedItem.arrow,
-      branchId: "1001",
+      branchId: auth.branchId.toString(),
       sequenceId: "sequenceId",
       sourceNodeType: editedItem.sourceNodeType,
       targetNodeType: editedItem.targetNodeType,
       edgeDescription: "edgeDescription",
       unitsId: "unitsId",
       materialType: "materialType",
-      userId: "1111",
-      PercentOfInput: PercentInput
+      userId: auth.empId.toString(),
+      // PercentOfInput: PercentInput
+      
     };
-    console.log(edite);
+    console.log(edite,"idcheck");
     axios
       .put(`${BASE_URL}/api/edgeMaster/${editedItem.edgeId}`, edite)
       .then((response) => {
         console.log("Data saved successfully", response.data);
         setEditedIndex(null);
+        sendtoConfigurations(editedItem.edgeId);
         toast.success(
-          <span>
-            <strong>Successfully</strong> Updated.
-          </span>,
-          {
-            position: toast.POSITION.BOTTOM_RIGHT,
-            className: 'custom-toast'
-          }
+          <span><strong>Successfully</strong> Updated.</span>,
+          {position: toast.POSITION.BOTTOM_RIGHT,className: 'custom-toast'}
         );
         showEdges();
       })
@@ -128,17 +122,14 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
 
 
   return (
-    // <div className="container-fluid" style={{ width: "100%", height: '400px' }}>
     <div className="container-fluid" style={{
-      // height: tableHeight ? tableHeight : '200px',
       height:  height,
       overflowY: "scroll",
       overflowX :"hidden"
     }}>
-      {/* <div className="container-fluid" style={{ width: "100%", height: tableHeightt ? (tableHeightt > 400 ? '400px' : `${tableHeightt}px`) : '100px' }}>  */}
       <div className="row">
         <div className="col-12">
-          <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto" }}>
+          <div className="table-responsive">
             <table className="table table-bordered table-striped">
               <thead className="sticky-top">
                 <tr>
@@ -358,7 +349,7 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
                                     }}
                                     onClick={removeEdit}
                                   >
-                                    <FaXmark />
+                                    <FaXmark id="FaMinus"/>
                                   </button>
                                 </>
                               ) : (
@@ -369,7 +360,7 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
                                   }}
                                 //         onClick={() => handleDeleteFGMapping(item.id)}
                                 >
-                                  <FaMinus />
+                                  <FaMinus id="FaMinus"/>
                                 </button>
                               )}
                               &nbsp;&nbsp;
@@ -382,7 +373,7 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
                                     }}
                                     onClick={(event) => handleSave()}
                                   >
-                                    <FaCheck />
+                                    <FaCheck id="FaCheck"/>
                                   </button>
                                 </>
                               ) : (
@@ -391,9 +382,9 @@ function Edgesdata({ RoutedatafromEdge, onClick, tableHeight }) {
                                     border: "none",
                                     backgroundColor: "transparent",
                                   }}
-                                  onClick={() => handleEdit(index)}
+                                  onClick={() => handleEdit(index,item.edgeId)}
                                 >
-                                  <FaEdit />
+                                  <FaEdit  id="FaEdit"/>
                                 </button>
                               )}
                             </div>

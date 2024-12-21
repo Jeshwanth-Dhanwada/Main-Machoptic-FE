@@ -88,6 +88,7 @@ import NodeTypeModal from "./nodeTypeModal.js";
 
 import Paper from "@mui/material/Paper";
 import Draggable from "react-draggable";
+import { createNodeDataforPC } from "../utils/convertToNodesPC.js";
 
 
 function PaperComponent(props) {
@@ -297,56 +298,15 @@ const PlanningShowRoutes = ({
         setData(response.data);
         let filter = response.data.filter((item) => {
           // If nodeType is "employee", apply the date filter conditionally
-          if (item.nodeType === "employee" || item.nodeType === "job") {
+          if (item.nodeType === "job") {
             return (
               (dateFilter ? item.date.startsWith(dateFilter) : true) // Apply dateFilter if set
             );
           }
           // Fetch all other nodes without date condition
-          return item.nodeType === "Machine" ;
+          return item.nodeType === "Machine" || item.nodeType === 'MachineIcon';
         });
-        let x = [];
-        
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+        const x = createNodeDataforPC(filter)
         setNodes(x);
         setOpenLoader(false);
         // setAllNodesRendered(true); // Indicate nodes are ready for further rendering effects
@@ -365,65 +325,16 @@ const PlanningShowRoutes = ({
 
         let filter = response.data.filter((item) => {
           // If nodeType is "employee", apply the date filter conditionally
-          if (item.nodeType === "employee" || item.nodeType === "job") {
+          if (item.nodeType === "job") {
             return (
               (dateFilter ? item.date.startsWith(dateFilter) : true) // Apply dateFilter if set
             );
           }
           // Fetch all other nodes without date condition
-          return item.nodeType === "Machine" ;
+          return item.nodeType === "Machine" || item.nodeType === 'MachineIcon';
         });
 
-        // let filter = [];
-        // filter = response.data.filter(
-        //   (item) =>
-        //     item.nodeType === "Machine" ||
-        //     item.nodeType === 'employee' ||
-        //     item.nodeType === "job"
-        // );
-
-        let x = [];
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          console.log(data.DateTime.split("T")[0],"getdataaaa")
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+        const x = createNodeDataforPC(filter)
         setNodes(x);
         setOpenLoader(false);
       })
@@ -445,48 +356,6 @@ const PlanningShowRoutes = ({
     setNodeShowPopup(false);
   };
 
-  // const getsourcenodeId = (params) => {
-  //   const nodedata = data.filter(item => item.id === params.source);
-  //   return nodedata[0].nodeId
-  // }
-
-  // const gettargetnodeId = (params) => {
-  //   const edgedata = data.filter(item => item.id === params.target);
-  //   return edgedata[0].nodeId
-  // }
-  // //Add Edge connection logic ----------------------
-
-  // const onConnect = useCallback(
-  //   (params) => {
-  //     console.log(params,"params")
-  //     if (route && route.routeid) {
-  //       const newEdge = {
-  //         ...params,
-  //         id: uuidv4(),
-  //         edgeId: undefined,
-  //         sourceNodeId: getsourcenodeId(params),
-  //         targetNodeId: gettargetnodeId(params),
-  //         routeId: route.routeid,
-  //         type: "smoothstep",
-  //         label: "",
-  //         markerEnd: {
-  //           type: MarkerType.ArrowClosed,
-  //           width: 25,
-  //           height: 25,
-  //           color: "#000",
-  //           arrow: true,
-  //         },
-  //         style: { strokeWidth: 1, stroke: "#CECECF" },
-  //         animated: false,
-  //       };
-  //       setEdges((edges) => addEdge(newEdge, edges));
-  //     } else {
-  //       // Handle the case when route.id is not present (e.g., show an error message)
-  //       console.log("Cannot connect edges: route.id is not present.");
-  //     }
-  //   },
-  //   [route, setEdges]
-  // );
 
   // Add Node --------------------------------------
 
@@ -1445,63 +1314,16 @@ const PlanningShowRoutes = ({
               setData(response.data);
               let filter = response.data.filter((item) => {
                 // If nodeType is "employee", apply the date filter conditionally
-                if (item.nodeType === "employee" || item.nodeType === "job") {
+                if (item.nodeType === "job") {
                   return (
                     (dateFilter ? item.date.startsWith(dateFilter) : true) // Apply dateFilter if set
                   );
                 }
                 // Fetch all other nodes without date condition
-                return item.nodeType === "Machine";
+                return item.nodeType === "Machine" || item.nodeType === 'MachineIcon';
               });
-              // let filter = [];
-              // filter = response.data.filter(
-              //   (item) =>
-              //     item.nodeType === "Machine" ||
-              //     item.nodeType === 'employee' ||
-              //     item.nodeType === "job"
-              // );
-              let x = [];
-              for (let index = 0; index < filter.length; index++) {
-                const data = filter[index];
-                console.log(data.DateTime.split("T")[0],"getdataaaa")
-                x.push({
-                  nodeId: data.nodeId,
-                  id: data.id,
-                  nodeType: data.nodeType,
-                  MachineType: data.MachineType,
-                  nodeCategory: data.nodeCategory,
-                  unit1Measurable: data.unit1Measurable,
-                  unit2Mandatory: data.unit2Mandatory,
-                  iconId: data.iconId,
-                  itemDescription: data.itemDescription,
-                  nodeImage: data.nodeImage,
-                  percentage_rejects: data.percentage_rejects,
-                  type: data.type,
-                  parentNode: data?.parentNode,
-                  extent: data.extent,
-                  data: { label: data.nodeName },
-                  sourcePosition: data.sourcePosition,
-                  targetPosition: data.targetPosition,
-                  width: data.width,
-                  height: data.height,
-                  position: { x: data.xPosition, y: data.yPosition },
-                  style: {
-                    background: data.fillColor, // Set background color
-                    color: data.FontColor, // Set text color
-                    borderColor: data.borderColor,
-                    borderStyle: data.borderStyle,
-                    borderWidth: data.borderWidth,
-                    fontSize: data.FontSize, // Set the font size
-                    fontStyle: data.FontStyle, // Set the font style
-                    width: data.width,
-                    height: data.height,
-                    borderRadius: data.borderRadius,
-                    display: data.borderRadius ? "flex" : "",
-                    alignItems: data.nodeImage == null ? "center" : "",
-                    justifyContent: "center",
-                  },
-                });
-              }
+              
+              const x = createNodeDataforPC(filter)
               setNodes(x);
             })
             .catch((error) => {
@@ -1792,12 +1614,9 @@ const PlanningShowRoutes = ({
   const handleEdgesandNodes = (event) => {
     event.preventDefault();
     Promise.all([
-      handleEdge(),
       handleSaveNode(),
-      handleEmployeeSubmit(),
-      handleDeviceSubmit(),
       handleJobAssignSubmit(),
-      handleNodeAllocationMapping(),
+      // handleNodeAllocationMapping(),
     ]).then(() => {
       toast.success(
         <span>
@@ -2208,64 +2027,16 @@ const PlanningShowRoutes = ({
           .then((response) => {
             setData(response.data);
             let filter = response.data.filter((item) => {
-              // If nodeType is "employee", apply the date filter conditionally
-              if (item.nodeType === "employee" || item.nodeType === "job") {
+              // If nodeType is "job", apply the date filter conditionally
+              if (item.nodeType === "job") {
                 return (
                   (dateFilter ? item.date.startsWith(dateFilter) : true) // Apply dateFilter if set
                 );
               }
               // Fetch all other nodes without date condition
-              return item.nodeType === "Machine";
+              return item.nodeType === "Machine" || item.nodeType === 'MachineIcon';
             });
-            // let filter = [];
-            // filter = response.data.filter(
-            //   (item) =>
-            //     item.nodeType === "Machine" ||
-            //     item.nodeType === 'employee' ||
-            //     item.nodeType === "job"
-            // );
-            let x = [];
-            for (let index = 0; index < filter.length; index++) {
-              const data = filter[index];
-              console.log(data.DateTime.split("T")[0],"getdataaaa")
-              x.push({
-                nodeId: data.nodeId,
-                id: data.id,
-                nodeType: data.nodeType,
-                MachineType: data.MachineType,
-                nodeCategory: data.nodeCategory,
-                unit1Measurable: data.unit1Measurable,
-                unit2Mandatory: data.unit2Mandatory,
-                iconId: data.iconId,
-                itemDescription: data.itemDescription,
-                nodeImage: data.nodeImage,
-                percentage_rejects: data.percentage_rejects,
-                type: data.type,
-                parentNode: data?.parentNode,
-                extent: data.extent,
-                data: { label: data.nodeName },
-                sourcePosition: data.sourcePosition,
-                targetPosition: data.targetPosition,
-                width: data.width,
-                height: data.height,
-                position: { x: data.xPosition, y: data.yPosition },
-                style: {
-                  background: data.fillColor, // Set background color
-                  color: data.FontColor, // Set text color
-                  borderColor: data.borderColor,
-                  borderStyle: data.borderStyle,
-                  borderWidth: data.borderWidth,
-                  fontSize: data.FontSize, // Set the font size
-                  fontStyle: data.FontStyle, // Set the font style
-                  width: data.width,
-                  height: data.height,
-                  borderRadius: data.borderRadius,
-                  display: data.borderRadius ? "flex" : "",
-                  alignItems: data.nodeImage === null ? "center" : "",
-                  fontColor: data.FontColor,
-                },
-              });
-            }
+            const x = createNodeDataforPC(filter)
             setNodes(x);
             console.log("nodes from API:", x);
           })
@@ -2420,6 +2191,7 @@ const PlanningShowRoutes = ({
   };
 
   const onDrop = (event) => {
+    console.log(nodes,"JobDetails")
     event.preventDefault();
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
     const empData = JSON.parse(
@@ -2814,13 +2586,15 @@ const PlanningShowRoutes = ({
           const { iconId, IT_CODE, nodedetails } = selectedItem;
           const existingData = node || [];
           console.log(selectedItem, "JobDetails");
-
+          
           const routePath = ItemMaster.filter(
             (item) => item.IT_CODE === IT_CODE
           )[0];
+          console.log(routePath, "JobDetails");
           const routeForNode = Edgestabledata.filter(
             (item) => item?.sourceNodeId === nodedetails.nodeId
           )[0];
+          console.log(routeForNode, "JobDetails");
 
           if (routePath.Route !== routeForNode?.routeId) {
             // setshowdialog(true);
@@ -2830,15 +2604,17 @@ const PlanningShowRoutes = ({
           }
           const latestBatchDetail = getLatestBatch(nodedetails.nodeId, iconId);
           let newData;
-
           const CheckRMIDinFGMapping = FGMappingData.filter(
             (item) => item.nodeIdFG === IT_CODE
           ).map((item) => item.nodeIdRM);
+          console.log(CheckRMIDinFGMapping, "JobDetails");
           const CheckRMinBatch = batchdata.map((item) => item.ItemCode);
-
+          console.log(CheckRMinBatch, "JobDetails");
+          
           const isEveryRMIDInBatch = CheckRMIDinFGMapping.some((rmId) =>
             CheckRMinBatch.includes(rmId)
-          );
+        );
+        console.log(isEveryRMIDInBatch, "JobDetails");
 
           if (isEveryRMIDInBatch) {
             console.log("All RM IDs are present in batchdetails");
@@ -2847,30 +2623,36 @@ const PlanningShowRoutes = ({
               if (outstandingQty <= 0 && getNodeDetail(nodedetails.nodeId)?.allowExcessQty) {
                 if (window.confirm("You have produced Maximum Limit are you sure want to create excess ?")) {
                   newData = [{...existingData,totalProducedQty, targetQty, outstandingQty }];
-                  setJobMapping(newData);
+                  setJobMapping((exisjob) => exisjob.concat(newData));
                   setStartDate(initializeStartDateArray(newData.length));
+                  setNodes((es) => es.concat(jobNode));
                 }
               } else if (outstandingQty <= 0) {
                 HandleOpenDialogBox("You have already produced maximum quanitity")
                 setJobMapping([]);
+                // setNodes((es) => es.concat(jobNode));
               } else {
+                console.log("Incoming")
                 newData = [ {...existingData, totalProducedQty, targetQty, outstandingQty, IT_CODE }];
-                setJobMapping(newData);
+                setJobMapping((exisjob) => exisjob.concat(newData));
                 setStartDate(initializeStartDateArray(newData.length));
+                setNodes((es) => es.concat(jobNode));
               }
             } else {
               newData = [{...existingData,IT_CODE }]
-              setJobMapping(newData);
+              setJobMapping((exisjob) => exisjob.concat(newData));
               setStartDate(initializeStartDateArray(newData.length));
+              setNodes((es) => es.concat(jobNode));
             }
           } else {
             // alert("Some or all RM IDs are not present in batchdetails");
-            HandleOpenDialogBox("HandleOpenDialogBox")
+            HandleOpenDialogBox("Some or all RM IDs are not present in batchdetails")
           }
         });
+        console.log(nodes,"JobDetails")
         setOadetails((jobs) => jobs.filter((a) => a.jobId !== empData.jobId));
         if (jobNode && Object.keys(jobNode).length > 0) {
-          setNodes((es) => es.concat(jobNode));
+          // setNodes((es) => es.concat(jobNode));
           // setJobMapping([...JobMapping, jobNode]);
         }
       }
@@ -2899,6 +2681,7 @@ const PlanningShowRoutes = ({
       // }
     }
   };
+  console.log(nodes,"JobDetails")
 
   const onDragOver = (event) => {
     console.log("Start dragged over");

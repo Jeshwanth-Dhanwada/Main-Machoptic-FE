@@ -18,7 +18,6 @@ function NodeState() {
   const [Shiftdata, setShiftData] = useState([]);
   const [empId, setEmpId] = useState([]);
   const [empNode, setEmpNode] = useState([]);
-  const [defaultvalue, getEMPAllocation] = useState([]);
   // const [selectedEmployee, setSelectedEmployee] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");

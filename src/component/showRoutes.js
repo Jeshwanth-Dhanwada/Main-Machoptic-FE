@@ -1,4 +1,3 @@
-/* eslint-disable import/no-anonymous-default-export */
 import Dagre from "@dagrejs/dagre";
 import React, {
   useCallback,
@@ -10,8 +9,8 @@ import React, {
 } from "react";
 import EdgeEditPopup from "./EdgeEditor.js";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import { Backdrop, Card, Slider } from "@mui/material";
+import { toast } from "react-toastify";
+import { Backdrop, Card } from "@mui/material";
 import { BsPlusLg } from "react-icons/bs";
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
@@ -35,7 +34,6 @@ import {
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import { NODE_WIDTH, NODE_HEIGHT } from "../constants/chartlConstants.js";
-import { ReactFlowProvider } from "react-flow-renderer";
 import iconNode from "./nodeTypes/iconNode.js";
 import graphNode from "./nodeTypes/graphNode.js";
 import MachineNode from "./nodeTypes/MachineNode.js";
@@ -56,7 +54,6 @@ import ReactFlow, {
 import "./sidebar.css";
 import { BASE_URL } from "../constants/apiConstants.js";
 import BasicTabs from "./tabs.js";
-import RightOperationTabPanel from "./rigtPanel/rightOperationPanel.js";
 import "reactflow/dist/style.css";
 import Button from "@mui/material/Button";
 import debounce from "lodash.debounce";
@@ -68,9 +65,7 @@ import { v4 as uuidv4 } from "uuid";
 import { FaSave, FaCheck } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
 import NodeEditor from "./NodeEditor.js";
-import RightTabPanel from "./rigtPanel/panelTabs.js";
 import DevicePanel from "./rigtPanel/devicePanel.js";
-import Priorityjobspanel from "./rigtPanel/Priority_jobspanel.js";
 import RightSlider from "../layout/RightSlider.js";
 import { RiDeleteBinLine } from "react-icons/ri";
 import RoutePopup from "./Route.js";
@@ -87,6 +82,7 @@ import NodeTypeModal from "./nodeTypeModal.js";
 
 import Paper from '@mui/material/Paper';
 import Draggable from 'react-draggable';
+import { createNodeDataforPC } from "../utils/convertToNodesPC.js";
 
 
 function PaperComponent(props) {
@@ -140,35 +136,6 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-const getLayoutedElements = (nodes, edges, options, direction) => {
-  // const isHorizontal = direction === "LR";
-  // g.setGraph({ rankdir: direction });
-  g.setGraph({ rankdir: options.direction });
-
-  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-  nodes.forEach((node) => g.setNode(node.id, node));
-
-  Dagre.layout(g);
-
-  return {
-    nodes: nodes.map((node) => {
-      const { x, y } = g.node(node.id);
-      return { ...node, position: { x, y } };
-    }),
-    edges,
-  };
-};
-
-// const nodeColor = (node) => {
-//   switch (node.type) {
-//     case "input":
-//       return "#6ede87";
-//     case "output":
-//       return "#6865A5";
-//     default:
-//       return "#ff0072";
-//   }
-// };
 
 let id = 1;
 const getId = () => {
@@ -209,7 +176,6 @@ const ShowRoutes = ({
   setSelectedId,
   datafromdatafromchild
 }) => {
-  console.log(datafromdatafromchild)
   const { fitView, addNodes } = useReactFlow();
   const [selectedNodeForEdit, setSelectedNodeForEdit] = useState(null);
   const [showGraph, setshowGraph] = useState(false);
@@ -291,14 +257,19 @@ const ShowRoutes = ({
     const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD' format
     setDateFilter(today);
   }, []);
-  const HandleDateFilter = (e) => {
-    setDateFilter(e.target.value)
-    if(e.target.value){
-      getNodedata()
-    }
-  }
 
+
+  const [triggerEffect, setTriggerEffect] = useState(false); // Step 1: Add trigger state
+
+  // Step 2: Effect to update the trigger state based on `datafromdatafromchild`
   useEffect(() => {
+    if (datafromdatafromchild) {
+      setNodes([])
+      setTriggerEffect(prev => !prev); // Toggle trigger effect when `datafromdatafromchild` changes
+    }
+  }, [datafromdatafromchild, setNodes]);
+  useEffect(() => {
+    setNodes([])
     // Fetch data from the API when the component mounts
     setOpenLoader(true);
     const apiUrl = `${BASE_URL}/api/nodeMaster`;
@@ -312,57 +283,19 @@ const ShowRoutes = ({
                                     || item.nodeType === 'Material'
                                     || item.nodeType === 'employee'
                                     || item.nodeType === 'device'
-                                    || item.nodeType === ''
+                                    || item.nodeType === 'MachineIcon'
+                                    // || item.nodeType === ''
                                   ))
-        let x = [];
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+       const x = createNodeDataforPC(filter)
         setNodes(x);
         setOpenLoader(false);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
-  }, [setNodes]);
+  }, [triggerEffect]);
 
+  console.log(nodes,"checkstaff")
   function getNodedata(){
     const apiUrl = `${BASE_URL}/api/nodeMaster`;
     axios
@@ -376,50 +309,11 @@ const ShowRoutes = ({
                                     || item.nodeType === 'Material'
                                     || item.nodeType === 'employee'
                                     || item.nodeType === 'device'
+                                    || item.nodeType === 'MachineIcon'
                                     || item.nodeType === ''
                                   ))
         
-        let x = [];
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+        const x = createNodeDataforPC(filter)
         setNodes(x);
         setOpenLoader(false);
       })
@@ -441,49 +335,7 @@ const ShowRoutes = ({
     setNodeShowPopup(false);
   };
 
-  // const getsourcenodeId = (params) => {
-  //   const nodedata = data.filter(item => item.id === params.source);
-  //   return nodedata[0].nodeId
-  // }
-
-  // const gettargetnodeId = (params) => {
-  //   const edgedata = data.filter(item => item.id === params.target);
-  //   return edgedata[0].nodeId
-  // }
-  // //Add Edge connection logic ----------------------
-
-  // const onConnect = useCallback(
-  //   (params) => {
-  //     console.log(params,"params")
-  //     if (route && route.routeid) {
-  //       const newEdge = {
-  //         ...params,
-  //         id: uuidv4(),
-  //         edgeId: undefined,
-  //         sourceNodeId: getsourcenodeId(params),
-  //         targetNodeId: gettargetnodeId(params),
-  //         routeId: route.routeid,
-  //         type: "smoothstep",
-  //         label: "",
-  //         markerEnd: {
-  //           type: MarkerType.ArrowClosed,
-  //           width: 25,
-  //           height: 25,
-  //           color: "#000",
-  //           arrow: true,
-  //         },
-  //         style: { strokeWidth: 1, stroke: "#CECECF" },
-  //         animated: false,
-  //       };
-  //       setEdges((edges) => addEdge(newEdge, edges));
-  //     } else {
-  //       // Handle the case when route.id is not present (e.g., show an error message)
-  //       console.log("Cannot connect edges: route.id is not present.");
-  //     }
-  //   },
-  //   [route, setEdges]
-  // );
-
+ 
   // Add Node --------------------------------------
 
   const getsourcenodeId = (params) => {
@@ -526,12 +378,12 @@ const ShowRoutes = ({
             label: "",
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              width: 25,
-              height: 25,
-              color: "#000",
+              width: 15,
+              height: 15,
+              color: "#1C9C9B",
               arrow: true,
             },
-            style: { strokeWidth: 1, stroke: "#CECECF" },
+            style: { strokeWidth: 1, stroke: "#1C9C9B"},
             animated: false,
           };
           setEdges((edges) => addEdge(newEdge, edges));
@@ -556,221 +408,12 @@ const ShowRoutes = ({
     setNodeType(item);
   };
 
-  const CreateNewNode = () => {
-    // Check if NodeType is 'Machine' or 'Material'
-    if (nodeType === "Machine" || nodeType === "Material") {
-      const selectedNode = nodes.find((node) => node.selected);
-      if (!selectedNode && nodeType === "Machine") {
-        const newNode = {
-          id: uuidv4(),
-          nodeType: nodeType,
-          MachineType: "",
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          type: "",
-          unit2Mandatory: "",
-          iconId: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          height: "60px",
-          width: "250px",
-          position: {
-            x: 200, // Generate a random x-coordinate within a reasonable range
-            y: 0, // Generate a random y-coordinate within a reasonable range
-          },
-          data: {
-            label: `Node ${getId()}`,
-          },
-          sourcePosition: "right",
-          targetPosition: "left",
-          style: {
-            background: "#EEEEEE", // Set background color
-            color: "#000000", // Set text color
-            borderColor: "#CCCCCC",
-            borderStyle: "solid",
-            borderWidth: "1px",
-            fontSize: "14px", // Set the font size
-            fontStyle: "normal", // Set the font style
-            width: "300px",
-            height: "60px",
-            borderRadius: "10px",
-            justifycontent: "center" /* Horizontally center */,
-            alignitems: "center" /* Vertically center */,
-          },
-        };
-        setNewNode(newNode);
-        // computeNodeList.push(newNode)
-        addNodes(newNode);
-      }
-      if (!selectedNode && nodeType === "Material") {
-        const newNode = {
-          id: uuidv4(),
-          nodeType: nodeType,
-          MachineType: "",
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          type: "",
-          unit2Mandatory: "",
-          iconId: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          height: "60px",
-          width: "250px",
-          position: {
-            x: 200, // Generate a random x-coordinate within a reasonable range
-            y: 0, // Generate a random y-coordinate within a reasonable range
-          },
-          data: {
-            label: `Node ${getId()}`,
-          },
-          sourcePosition: "right",
-          targetPosition: "left",
-          style: {
-            background: "#EEEEEE", // Set background color
-            color: "#000000", // Set text color
-            borderColor: "#CCCCCC",
-            borderStyle: "solid",
-            borderWidth: "1px",
-            fontSize: "14px", // Set the font size
-            fontStyle: "normal", // Set the font style
-            width: "80px",
-            height: "80px",
-            borderRadius: "50%",
-            justifycontent: "center" /* Horizontally center */,
-            alignitems: "center" /* Vertically center */,
-          },
-        };
-        setNewNode(newNode);
-        // computeNodeList.push(newNode)
-        addNodes(newNode);
-      } else {
-        const xOffset = 400; // Initial x-offset
-        const yOffset = 0; // Initial y-offset
-        const offsetIncrement = 50; // Increase in offset for each new node
 
-        const existingNodesAtPosition = (x, y) =>
-          nodes.some((node) => node.position.x === x && node.position.y === y);
-
-        const calculatePosition = (x, y, offset) => {
-          while (existingNodesAtPosition(x, y)) {
-            x += offset;
-            y += offset;
-          }
-          return { x, y };
-        };
-
-        // console.log("something", initialNodes);
-
-        // If a node is selected, add the new node and create a connection
-        const newX = selectedNode.position.x + xOffset;
-        const newY = selectedNode.position.y + yOffset;
-
-        const { x: finalX, y: finalY } = calculatePosition(
-          newX,
-          newY,
-          offsetIncrement
-        );
-        if (nodeType === "Machine") {
-          const newNode = {
-            id: uuidv4(),
-            nodeType: nodeType,
-            MachineType: "",
-            nodeCategory: "",
-            unit1Measurable: "",
-            parentNode: "",
-            extent: "",
-            type: "",
-            unit2Mandatory: "",
-            iconId: "",
-            itemDescription: "",
-            nodeImage: "",
-            percentage_rejects: "",
-            // nodeId:NodegetId(),
-            position: { x: finalX, y: finalY },
-            sourcePosition: "right",
-            targetPosition: "left",
-            data: {
-              label: `Node ${getId()}`,
-            },
-            style: {
-              background: "#EEEEEE", // Set background color
-              color: "#000000", // Set text color
-              borderColor: "#CCCCCC",
-              borderStyle: "solid",
-              borderWidth: "1px",
-              fontSize: "14px", // Set the font size
-              fontStyle: "normal", // Set the font style
-              width: "300px",
-              height: "60px",
-              borderRadius: "10px",
-              justifycontent: "center" /* Horizontally center */,
-              alignitems: "center" /* Vertically center */,
-            },
-          };
-          setNewNode(newNode);
-          computeNodeList.push(newNode);
-          addNodes(newNode);
-          setEdges((prevEdges) => [...prevEdges]);
-        }
-        if (nodeType === "Material") {
-          const newNode = {
-            id: uuidv4(),
-            nodeType: nodeType,
-            MachineType: "",
-            nodeCategory: "",
-            unit1Measurable: "",
-            parentNode: "",
-            extent: "",
-            type: "",
-            unit2Mandatory: "",
-            iconId: "",
-            itemDescription: "",
-            nodeImage: "",
-            percentage_rejects: "",
-            // nodeId:NodegetId(),
-            position: { x: finalX, y: finalY },
-            sourcePosition: "right",
-            targetPosition: "left",
-            data: {
-              label: `Node ${getId()}`,
-            },
-            style: {
-              background: "#EEEEEE", // Set background color
-              color: "#000000", // Set text color
-              borderColor: "#CCCCCC",
-              borderStyle: "solid",
-              borderWidth: "1px",
-              fontSize: "14px", // Set the font size
-              fontStyle: "normal", // Set the font style
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              justifycontent: "center" /* Horizontally center */,
-              alignitems: "center" /* Vertically center */,
-            },
-          };
-          setNewNode(newNode);
-          computeNodeList.push(newNode);
-          addNodes(newNode);
-          setEdges((prevEdges) => [...prevEdges]);
-        }
-      }
-    }
-  };
   const onAddNode = useCallback(
     (NodeType) => {
       resetTrigger();
       setNodeType();
-      // const onAddNode = (NodeType) => {
-      // if (NodeType === 'NodeType') {
-      //   setIsModalOpen(true); // Open the modal if NodeType matches 'NodeType'
-      // }
+     
       const selectedNode = nodes.find((node) => node.selected);
       if (!selectedNode) {
         const newNode = {
@@ -929,14 +572,6 @@ const ShowRoutes = ({
     },
     [addNodes, computeNodeList, nodes, setEdges]
   );
-
-  // useEffect(() => {
-  //   // Call CreateNewNode when nodeType is set
-  //   if ((nodeType === 'Machine' || nodeType === 'Material') && !triggered) {
-  //     CreateNewNode();
-  //     setTriggered(true); // Prevent it from triggering again
-  //   }
-  // },[nodeType, triggered])
 
   // Reset triggered flag if needed elsewhere
   const resetTrigger = () => {
@@ -1271,73 +906,6 @@ const ShowRoutes = ({
     }
   }
 
-  // const deleteSelectedElements = useCallback(() => {
-  //   setConsecutiveAddCounter(0);
-  //   const selectedNode = nodes.find((node) => node.selected);
-  //   if (!selectedNode) {
-  //     // Display an alert or notification to the user
-  //     alert("Please select a node to delete.");
-  //     return;
-  //   }
-  //   const selectedNodeIds = new Set();
-  //   const selectedEdgeIds = new Set();
-  //   nodes.forEach((node) => {
-  //     if (node.selected) {
-  //       selectedNodeIds.add(node.id);
-  //       // Collect descendant nodes by traversing edges
-  //       edges.forEach((edge) => {
-  //         if (edge.source === node.id) {
-  //           selectedNodeIds.add(edge.target);
-  //         }
-  //       });
-  //     }
-  //   });
-
-  //   // Collect edges connected to the selected nodes
-  //   edges.forEach((edge) => {
-  //     if (
-  //       selectedNodeIds.has(edge.source) ||
-  //       selectedNodeIds.has(edge.target)
-  //     ) {
-  //       selectedEdgeIds.add(edge.id);
-  //     }
-  //   });
-
-  //   const filteredNodes = nodes.filter((node) => !selectedNodeIds.has(node.id));
-  //   console.log(filteredNodes);
-  //   const filteredEdges = edges.filter((edge) => !selectedEdgeIds.has(edge.id));
-
-  //   setNodes(filteredNodes);
-  //   setEdges(filteredEdges);
-  // }, [nodes, edges, setNodes, setEdges]);
-
-  const [layoutDirection, setLayoutDirection] = useState("TB"); // Default to "TB" (top-bottom) layout
-  const onLayout = useCallback(
-    (direction) => {
-      const newDirection = layoutDirection === "TB" ? "LR" : "TB"; // Toggle the layout direction
-      const layouted = getLayoutedElements(nodes, edges, {
-        direction: newDirection,
-      });
-      setLayoutDirection(newDirection);
-      // const layouted = getLayoutedElements(nodes, edges, { direction });
-      directionOn = direction;
-
-      // Set source and target positions based on the direction
-      const updatedNodes = layouted.nodes.map((node) => ({
-        ...node,
-        sourcePosition: newDirection === "TB" ? "right" : "left",
-        targetPosition: newDirection === "TB" ? "right" : "left",
-      }));
-
-      setNodes(updatedNodes);
-      setEdges([...layouted.edges]);
-      const fitViewOptions = { padding: 0.4 };
-      window.requestAnimationFrame(() => {
-        fitView(fitViewOptions);
-      });
-    },
-    [layoutDirection, nodes, edges, setNodes, setEdges, fitView]
-  );
 
   const handleEdgeSave = (editedEdge) => {
     const updatedEdges = edges.map((edge) =>
@@ -1349,24 +917,6 @@ const ShowRoutes = ({
 
   const handleEdgeCancel = () => {
     setSelectedEdgeForEdit(null);
-  };
-
-  //Edit Node ------------
-
-  const handleEditNode = (node) => {
-    setSelectedNodeForEdit(node);
-    console.log("******");
-    // Set the selected property of the node to true
-    const updatedNodes = nodes.map((n) => ({
-      ...n,
-      selected: n.id === node.id,
-
-      // style: {
-      //   // backgroundColor: 'red',
-      //   border: '2px solid red',
-      // },
-    }));
-    setNodes(updatedNodes);
   };
 
   const handleNodeSave = (editedNode) => {
@@ -1480,9 +1030,7 @@ const ShowRoutes = ({
   };
 
   const handleSaveNode = () => {
-    // Generate JSON data for nodes
     const nodesData = generateJSONDataForNodes(nodes);
-    // Send the parsedNodesData to the database via an API
 
     axios
       .put(`${BASE_URL}/api/nodeMaster/bulk/`, nodesData, {
@@ -1505,47 +1053,7 @@ const ShowRoutes = ({
                                           || item.nodeType === 'device'
                                           || item.nodeType === ''
                                         ))
-              let x = [];
-              for (let index = 0; index < filter.length; index++) {
-                const data = filter[index];
-                x.push({
-                  nodeId: data.nodeId,
-                  id: data.id,
-                  nodeType: data.nodeType,
-                  MachineType: data.MachineType,
-                  nodeCategory: data.nodeCategory,
-                  unit1Measurable: data.unit1Measurable,
-                  unit2Mandatory: data.unit2Mandatory,
-                  iconId: data.iconId,
-                  itemDescription: data.itemDescription,
-                  nodeImage: data.nodeImage,
-                  percentage_rejects: data.percentage_rejects,
-                  type: data.type,
-                  parentNode: data?.parentNode,
-                  extent: data.extent,
-                  data: { label: data.nodeName },
-                  sourcePosition: data.sourcePosition,
-                  targetPosition: data.targetPosition,
-                  width: data.width,
-                  height: data.height,
-                  position: { x: data.xPosition, y: data.yPosition },
-                  style: {
-                    background: data.fillColor, // Set background color
-                    color: data.FontColor, // Set text color
-                    borderColor: data.borderColor,
-                    borderStyle: data.borderStyle,
-                    borderWidth: data.borderWidth,
-                    fontSize: data.FontSize, // Set the font size
-                    fontStyle: data.FontStyle, // Set the font style
-                    width: data.width,
-                    height: data.height,
-                    borderRadius: data.borderRadius,
-                    display: data.borderRadius ? "flex" : "",
-                    alignItems: data.nodeImage == null ? "center" : "",
-                    justifyContent: "center",
-                  },
-                });
-              }
+              const x = createNodeDataforPC(filter)
               setNodes(x);
             })
             .catch((error) => {
@@ -1569,38 +1077,7 @@ const ShowRoutes = ({
         },
       })
       .then((response) => {
-        // if(response.status === 201){
-        // const apiUrl = `${BASE_URL}/api/edgeMaster}`;
-        // axios.get(apiUrl)
-        //   .then((response) => {
-        //     const dataArray = response.data.map((data) => ({
-        //       id: data.id,
-        //       edgeId: data.edgeId,
-        //       routeid:data.routeId,
-        //       source: data.sourceId,
-        //       target: data.targetId,
-        //       type: data.edgeStyle,
-        //       animated: data.animation,
-        //       sourceNodeId:data.sourceNodeId,
-        //       targetNodeId:data.targetNodeId,
-        //       label: data.label,
-        //       style: { strokeWidth: data.edgeThickness, stroke: data.edgeColor },
-        //       markerEnd: {
-        //         type: MarkerType.ArrowClosed,
-        //         width: 15,
-        //         height: 15,
-        //         color: "#000",
-        //         arrow: data.arrow,
-        //       },
-        //     }));
-        //     setEdges(dataArray)
-        //     console.log(dataArray)
-        //     console.log("Incoming")
-        //   })
-        //     .catch((error) => {
-        //       console.error("Error fetching data:", error);
-        //     });
-        //   }
+    
       })
       .catch((error) => {
         console.error("Error saving data:", error);
@@ -1661,7 +1138,7 @@ const ShowRoutes = ({
           isActive: true,
           userId: auth.empId.toString(),
           default: "Yes",
-          primary: "Primary",
+          primary: "Yes",
           // date: getFormattedToday().split(' ').toString()
           date: getDate(),
         })),
@@ -1775,13 +1252,6 @@ const ShowRoutes = ({
 
   // Format the date using toLocaleDateString
   const indianFormattedDate = today.toLocaleDateString("en-IN", options);
-  function getFormattedToday() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`; // Correct format: YYYY-MM-DD
-  }
 
   const handleJobAssignSubmit = () => {
     if (JobMapping.length > 0) {
@@ -1861,16 +1331,6 @@ const ShowRoutes = ({
     []
   ); // New state for selected node ID
 
-  // const onNodeContextMenu = (event, node) => {
-  //   event.preventDefault(); // Prevent the default context menu
-  //   setSelectedNodes(node);
-  //   setNodeShowPopup(true);
-  //   setShowPopup(false);
-  //   setShowRoutePopup(true);
-  //   setSelectedNodeId(node.id);
-  //   setselectedNodeIdtoNodeGrpah(node)
-
-  // };
 
   const onNodeClick = useCallback(
     (event, node) => {
@@ -1880,27 +1340,11 @@ const ShowRoutes = ({
       setShowRoutePopup(true);
       setSelectedNodeId(node.id);
       setselectedNodeIdtoNodeGrpah(node);
-      // Update the selected node ID when a node is clicked
-      // setSelectedNodeId(node.id === selectedNodeId ? null : node.id);
     },
     [selectedNodeId, setNodeShowPopup, setSelectedNodes, setShowPopup]
   );
 
-  // const handleWheel = useCallback((event) => {
-  //   console.log("Incoming 2704")
-  //   // Check if shift key is pressed to allow zooming
-  //     event.preventDefault();
-  //     const zoomSpeed = 0.1;
-  //     const { deltaX, deltaY } = event;
 
-  //     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-  //       // Horizontal scroll
-  //       flowRef.current.zoom(flowRef.current.getZoom() + (deltaX > 0 ? zoomSpeed : -zoomSpeed));
-  //     } else {
-  //       // Vertical scroll - prevent zooming
-  //       flowRef.current.zoom(flowRef.current.getZoom());
-  //     }
-  // },[])
   const getNodeStyle = useCallback(
     (node) => {
       // Dynamically update the node's style based on whether it's selected
@@ -1921,7 +1365,7 @@ const ShowRoutes = ({
       return {
         ...edge.style,
         // style: { strokeWidth: edge.edgeThickness, stroke: edge.edgeColor },
-        stroke: isSelected ? "red" : "black",
+        stroke: isSelected ? "red" : edge.style.stroke,
         strokeWidth: isSelected ? "3px" : edge.style.edgeThickness,
       };
     },
@@ -1945,10 +1389,6 @@ const ShowRoutes = ({
   // Route popup ----------
   const [showRoutePopup, setShowRoutePopup] = useState(true);
 
-  const handleRouteClick = () => {
-    // setShowRoutePopup(true);
-  };
-
   const onCloseRoute = () => {
     setShowRoutePopup(true);
     setNodeShowPopup(false);
@@ -1963,15 +1403,6 @@ const ShowRoutes = ({
   const [showEdges, setShowEdges] = useState(route); // State to control edges visibility
 
   // Function to toggle edges visibility
-  const toggleEdgesVisibility = () => {
-    setShowEdges(!showEdges);
-    // setRadioChecked(!radioChecked);
-  };
-  // const toggleEMployeeMapping = () => {
-  //   setShowEdges(!showEdges)
-  // }
-
-  // Fetching Employee the data from the database
 
   const [Employeesdata, setEmployees] = useState();
   const [droppedData, setDroppedData] = useState();
@@ -1991,15 +1422,7 @@ const ShowRoutes = ({
 
   const reactFlowWrapper = useRef(null);
   const [PopupEmp, setEmpPopup] = useState(false);
-  // const dragDropped = (event) => {
-  //   event.preventDefault(); // Allows the drop
-  //   let dataTransferedData = event.dataTransfer.getData('empId'); // Use the same data type as set in dragStarted
-  //   let dataTransfered = event.dataTransfer.getData('empName'); // Use the same data type as set in dragStarted
-  //   setDroppedData({ empId: dataTransferedData, empName: dataTransfered })
-  //   // Show the popup after setting the dropped data
-  //   // setEmpPopup(true)
-
-  // }
+ 
   const [shift, setShift] = useState(""); // State for the selected Shift
   const [startDate, setStartDate] = useState(""); // State for the Start Date
 
@@ -2044,25 +1467,6 @@ const ShowRoutes = ({
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-  // useEffect  = (() => {
-  //   switch (bottomtosidepanel){
-  //     case "Edges":
-  //       setValue(0); // Staff Mapping tab
-  //       break;
-  //     case "Staff Mapping":
-  //       setValue(1); // Device Mapping tab
-  //       break;
-  //     case "Raw Material":
-  //       setValue(2); // Device Mapping tab
-  //       break;
-  //     case "Device Mapping":
-  //       setValue(3); // Device Mapping tab
-  //       break;
-  //     default:
-  //     setValue(0); // Default to Nodes tab
-  //   }
-  // }, [bottomtosidepanel]);
 
   useEffect(() => {
     switch (bottomtosidepanel) {
@@ -2174,7 +1578,8 @@ const ShowRoutes = ({
   };
   const showEdgedata = async (key) => {
     const responsedata = await getEdges();
-    setEdgestabledata(responsedata, key);
+    const filterEdges = responsedata.filter((item)=>item.routeId == route)
+    setEdgestabledata(filterEdges, key);
   };
   const showActivitydata = async (key) => {
     const responsedata = await getActivities();
@@ -2240,47 +1645,7 @@ const ShowRoutes = ({
                                           || item.nodeType === 'device'
                                           || item.nodeType === ''
                                         ))
-            let x = [];
-            for (let index = 0; index < filter.length; index++) {
-              const data = filter[index];
-              x.push({
-                nodeId: data.nodeId,
-                id: data.id,
-                nodeType: data.nodeType,
-                MachineType: data.MachineType,
-                nodeCategory: data.nodeCategory,
-                unit1Measurable: data.unit1Measurable,
-                unit2Mandatory: data.unit2Mandatory,
-                iconId: data.iconId,
-                itemDescription: data.itemDescription,
-                nodeImage: data.nodeImage,
-                percentage_rejects: data.percentage_rejects,
-                type: data.type,
-                parentNode: data?.parentNode,
-                extent: data.extent,
-                data: { label: data.nodeName },
-                sourcePosition: data.sourcePosition,
-                targetPosition: data.targetPosition,
-                width: data.width,
-                height: data.height,
-                position: { x: data.xPosition, y: data.yPosition },
-                style: {
-                  background: data.fillColor, // Set background color
-                  color: data.FontColor, // Set text color
-                  borderColor: data.borderColor,
-                  borderStyle: data.borderStyle,
-                  borderWidth: data.borderWidth,
-                  fontSize: data.FontSize, // Set the font size
-                  fontStyle: data.FontStyle, // Set the font style
-                  width: data.width,
-                  height: data.height,
-                  borderRadius: data.borderRadius,
-                  display: data.borderRadius ? "flex" : "",
-                  alignItems: data.nodeImage === null ? "center" : "",
-                  fontColor: data.FontColor,
-                },
-              });
-            }
+           const x = createNodeDataforPC(filter)
             setNodes(x);
             console.log("nodes from API:", x);
           })
@@ -2551,6 +1916,7 @@ const ShowRoutes = ({
           sourcePosition: "right",
           targetPosition: "left",
           iconId: empData.empId.toString(),
+          // iconId: `employee${empData.empId.toString()}`,
           date:dateFilter,
           style: {
             zIndex: 1001,
@@ -2638,7 +2004,7 @@ const ShowRoutes = ({
             percentage_rejects: "",
             nodeType: "device",
             MachineType: "",
-            position: { x: 0, y: -40 },
+            position: { x: 30, y: -41.5 },
             type: "iconNode",
             parentNode: ParentnodeData.id,
             extent: "parent",
@@ -2703,7 +2069,7 @@ const ShowRoutes = ({
           percentage_rejects: "",
           nodeType: "device",
           MachineType: "",
-          position: { x: -0, y: -41.5 },
+          position: { x: 30, y: -41.5 },
           type: "iconNode",
           parentNode: ParentnodeData.id,
           extent: "parent",
@@ -3042,199 +2408,7 @@ const ShowRoutes = ({
     });
   };
 
-  // useEffect(() => {
-
-  // },[])
-
-  useEffect(() => {
-    if (selectedMenuItem === "Priority Job") {
-      // Filter batchdata for all material nodes
-      const filteredNodes = batchdata.filter((node) => node.MaterialId);
-      // Get unique nodeIds
-      const uniqueNodeIds = [
-        ...new Set(filteredNodes.map((node) => node.MaterialId)),
-      ];
-      const correspondingIds = [];
-
-      setNodes((existingNodes) => {
-        const filteredNodes = existingNodes.filter(
-          (node) => node.nodeType !== "GraphNode"
-        );
-        return filteredNodes;
-      });
-
-      uniqueNodeIds.forEach((nodeId) => {
-        const node = Nodemasterdata.find(
-          (item) =>
-            String(item.nodeId) === String(nodeId) &&
-            item.nodeCategory !== "Waste"
-        );
-        if (node) {
-          correspondingIds.push(node);
-        }
-      });
-      const empNodeData = correspondingIds.map((node) => {
-        const producedQty = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.producedQty1);
-        let a = 0;
-        producedQty.forEach((item) => {
-          a += parseInt(item);
-        });
-        const target = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.targetQty);
-        let b = 0;
-        target.forEach((item) => {
-          b += parseInt(item);
-        });
-
-        const outstanding = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.outstandingQty);
-        let c = 0;
-        outstanding.forEach((item) => {
-          c += parseInt(item);
-        });
-        console.log(outstanding, "CheckJobPriority");
-        const empNodeMap = {
-          parenId: "",
-          id: uuidv4(),
-          position: {
-            x: node.xPosition + 5,
-            y: node.yPosition - 350,
-          },
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          unit2Mandatory: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          nodeType: "GraphNode",
-          MachineType: "",
-          type: "graphNode",
-          sourcePosition: "right",
-          targetPosition: "left",
-          iconId: node.nodeId,
-          style: {
-            zIndex: 1001,
-            width: "100",
-            height: "100",
-            background: "",
-            color: "",
-            borderColor: "",
-            borderStyle: "",
-            borderWidth: "",
-            fontSize: "",
-            fontStyle: "",
-            borderRadius: "",
-            display: "",
-            alignItems: "",
-            fontColor: "",
-          },
-          data: {
-            label: "",
-            node: node.nodeId,
-            allnodes: correspondingIds,
-            producedQty: a,
-            targetQty: b,
-            outQty: c,
-          },
-        };
-        return empNodeMap;
-      });
-
-      setNodes((es) => es.concat(empNodeData));
-      setdataToBottomJobPriorPanel(empNodeData);
-    }
-    if (selectedMenuItem === "Priority Job") {
-      console.log(selectedMenuItem, "today");
-      const getnodeIds = jobAssignmentdata.map((item) => item.node.nodeId);
-      const PlannedJobs = jobAssignmentdata
-        .filter((item) => item.status === "Assigned")
-        .map((item) => item);
-      const completedJobs = Activitydata.map((item) => item);
-      const combinedJobs = completedJobs.concat(PlannedJobs);
-
-      const uniqueNodeIds = [...new Set(getnodeIds.map((node) => node))];
-
-      const correspondingIds = [];
-
-      // Filter Nodemasterdata for unique nodeIds and get corresponding IDs
-      uniqueNodeIds.forEach((nodeId) => {
-        const node = Nodemasterdata.find((item) => item.nodeId === nodeId);
-        if (node) {
-          correspondingIds.push(node);
-        }
-      });
-      // Filter out graph type nodes from the nodes state
-      setNodes((existingNodes) => {
-        // Filter out any graph-type nodes
-        const filteredNodes = existingNodes.filter(
-          (node) => node.nodeType !== "MachineNode"
-        );
-        // Concatenate the new MachineNode with the filtered nodes
-        return filteredNodes;
-      });
-      correspondingIds.map((node) => {
-        const MachineNode = {
-          parenId: "",
-          id: uuidv4(),
-          position: {
-            x: node.xPosition + 0,
-            y: node.yPosition - 130,
-          },
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          unit2Mandatory: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          nodeType: "MachineNode",
-          MachineType: "",
-          type: "MachineNode",
-          sourcePosition: "right",
-          targetPosition: "left",
-          iconId: "",
-          style: {
-            zIndex: 1001,
-            width: "100",
-            height: "100",
-            background: "",
-            color: "",
-            borderColor: "",
-            borderStyle: "",
-            borderWidth: "",
-            fontSize: "",
-            fontStyle: "",
-            borderRadius: "",
-            display: "",
-            alignItems: "",
-            fontColor: "",
-          },
-          data: {
-            data: combinedJobs,
-            nodeId: node.nodeId,
-            onIconDoubbleClick: onIconDoubbleClick,
-          },
-        };
-        setNodes((es) => es.concat(MachineNode));
-      });
-    }
-    // else{}
-  }, [
-    Nodemasterdata,
-    batchdata,
-    selectedMenuItem,
-    Activitydata,
-    Nodemasterdata,
-    jobAssignmentdata,
-  ]);
-  // }, [batchdata,Nodemasterdata]);
+ 
 
   const HandleMaterialGraph = (jobId) => {
     console.log(jobId, "multipleJobs");
@@ -3465,11 +2639,6 @@ const ShowRoutes = ({
     HandleCreateNodeMultipleNodes(multipleJobs);
   };
 
-  const EmptyEdges = () => {
-    if (edges.length > 0) {
-      setEdges([]);
-    }
-  };
 
   const HandleshowEdgesbasedonJob = (jobId) => {
     const getIT_Code = Oadetails.filter((item) => item.jobId === jobId).map(
@@ -3504,46 +2673,16 @@ const ShowRoutes = ({
       },
     }));
     setEdges(dataArray);
-    // if(getEdges){
-    //   setEdges(getEdges)
-    // }
   };
 
-  // console.log(sendtoRoutess,"sendtoRoutess")
-  // console.log(sendtoRoutes,"sendtoRoutess")
-  // useEffect(() => {
-  //   if (sendtoRoutes) {
-  //     setNodes([...nodes, sendtoRoutes]);
-  //     // console.log(nodes)
-  //     // console.log(sendtoRoutes)
-  //   }
-  // }, [nodes,sendtoRoutes]);
 
   useEffect(() => {
     if (sendtoRoutes) {
-      //   console.log("Incoming")
-      // setNodes([...nodes, sendtoRoutes]);
       setNodes((nds) => nds.concat(sendtoRoutes));
-      //   console.log(nodes)
     }
   }, [sendtoRoutes]);
 
-  // useEffect(() => {
-  //   if (sendtoRoutes) {
-  //     const { x, y } = sendtoRoutes;
-  //     // Check if x and y are defined
-  //     if (x !=== undefined && y !=== undefined) {
-  //       // Add sendtoRoutes to nodes if x and y are defined
-  //       setNodes((nds) => nds.concat(sendtoRoutes));
-  //     }
-  //   }
-  // }, [sendtoRoutes, setNodes]); // Only run the effect when sendtoRoutes changes
-  // Define your second export function
-
-  // const handleLinkClickName = (item) => {
-  //   setActive(item);
-  //   // handleLinkClick(item)
-  // }
+  
   const [isExpandedFull, setIsExpandedFull] = React.useState(false);
   const [size, setSize] = useState();
   const HandleIcon = (item) => {
@@ -3556,20 +2695,9 @@ const ShowRoutes = ({
   };
 
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
-  const [nodePosition, setNodePosition] = useState({ x: 0, y: 0 });
-  const [hoveredNodeIdPositionx, setHoveredNodeIdPositionx] = useState(null);
-  const [hoveredNodeIdPositiony, setHoveredNodeIdPositiony] = useState(null);
 
   const onNodeMouseEnter = (event, node) => {
     console.log(node.position.x, node.position.y, "2704");
-    if (node && node && node.position) {
-      setHoveredNodeId(node.id);
-      setNodePosition({ x: node.position.x, y: node.position.y });
-    } else {
-      console.error("Invalid node data:", node);
-    }
-    setHoveredNodeIdPositionx(node.position.x);
-    setHoveredNodeIdPositiony(node.position.y);
   };
   // console.log(nodePosition,"2704")
   const onNodeMouseLeave = () => {
@@ -3577,11 +2705,7 @@ const ShowRoutes = ({
   };
 
   const flowRef = useRef(null);
-  // console.log(value,"check")
 
-  const handleClickOpen = () => {
-    setConfirmUserToReplace(true);
-  };
 
   const handleClose = () => {
     setConfirmUserToReplace(false);
@@ -3622,34 +2746,25 @@ const ShowRoutes = ({
           zIndex: 1,
         }}
       >
-        <ReactFlowProvider>
           <div
             style={{ height: 565, width: "100%", overflow: "hidden" }}
             ref={reactFlowWrapper}
-            // onWheel={handleWheel}
           >
             <ReactFlow
-              // panOnDrag={true}
-              // panOnScroll={true}
-              // panOnScrollSpeed={10}
               onLoad={(reactFlowInstance) =>
                 (flowRef.current = reactFlowInstance)
               }
-              // zoomOnScroll={false}
-              // zoomOnDoubleClick={false}
-              // zoomOnPinch={false}
-              // panOnScrollMode={"horizontal"}
               ref={flowRef}
               nodesDraggable={selectedMenuItem === "Configuration"} // Disable dragging for nodes
               nodes={nodes.map((node) => ({
                 ...node,
                 style: getNodeStyle(node), // Apply the updated style
+                draggable: node.nodeType !== "MachineIcon" && node.nodeType !== "employee" && node.nodeType !== "device"
               }))}
               edges={edges.map((edge) => ({
                 ...edge,
                 style: getEdgeStyle(edge), // Apply the updated style
               }))}
-              // edges={edges}
               onNodeClick={onNodeClick}
               onNodeDoubleClick={onNodeDoubleClick}
               elements={droppedData}
@@ -3657,8 +2772,8 @@ const ShowRoutes = ({
               onEdgeContextMenu={onEdgeContextMenu}
               // onNodeContextMenu={onNodeContextMenu}
               onNodesChange={onNodesChange}
-              // onNodeMouseEnter={onNodeMouseEnter}
-              // onNodeMouseLeave={onNodeMouseLeave}
+              onNodeMouseEnter={onNodeMouseEnter}
+              onNodeMouseLeave={onNodeMouseLeave}
               onEdgesChange={onEdgesChange}
               onInit={setReactFlowInstance}
               // snapToGrid={true}
@@ -3841,287 +2956,6 @@ const ShowRoutes = ({
                   </div>
                 </div>
               )}
-              {selectedMenuItem === "Planning" && expanded && (
-                <Card
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "38px" }}
-                  className={`dashboard-right-container sticky-top ${
-                    active === "FG Mapping"
-                      ? expanded
-                        ? "expanded"
-                        : "partial"
-                      : ""
-                  }`}
-                >
-                  {expanded ? (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <RightSlider
-                        active={active}
-                        isExpandedFull={isExpandedFull}
-                        setIsExpandedFull={setIsExpandedFull}
-                        onclick={HandleIcon}
-                      />
-                      <KeyboardDoubleArrowRightIcon
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor: "#09587C",
-                          color: "#ffffff",
-                          position: "fixed",
-                          // right:'30%',
-                          right: size ? size : "30%",
-                          width: "25",
-                          height: "47px",
-                          top: "46px",
-                          display: "inline",
-                        }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  ) : (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <KeyboardDoubleArrowLeftIcon
-                        style={{ cursor: "pointer", color: "#09587C" }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  )}
-                  <div className="container-fluid">
-                    <div className="row">
-                      <div className="col-12 m-0 p-0">
-                        <RightOperationTabPanel
-                          sendtoPlanningtab={HandlesendtoPlanningtab}
-                          toRightOperationTabPanel={toRightOperationTabPanel}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-              {selectedMenuItem === "Planning" && !expanded && (
-                <div
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "45px" }}
-                  className={`dashboard-right-container sticky-top partial`}
-                >
-                  <div className="pt-2" onClick={handleExpandToggle}>
-                    <KeyboardDoubleArrowLeftIcon
-                      style={{
-                        cursor: "pointer",
-                        backgroundColor: "#09587C",
-                        color: "#ffffff",
-                        width: "25",
-                        height: "47px",
-                        position: "fixed",
-                        right: "0%",
-                      }}
-                      onClick={handleExpandToggle}
-                    />
-                  </div>
-                </div>
-              )}
-              {selectedMenuItem === "Operations" && expanded && (
-                <Card
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "38px" }}
-                  className={`dashboard-right-container sticky-top ${
-                    active === "FG Mapping"
-                      ? expanded
-                        ? "expanded"
-                        : "partial"
-                      : ""
-                  }`}
-                >
-                  {expanded ? (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <RightSlider
-                        active={active}
-                        isExpandedFull={isExpandedFull}
-                        setIsExpandedFull={setIsExpandedFull}
-                        onclick={HandleIcon}
-                      />
-                      <KeyboardDoubleArrowRightIcon
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor: "#09587C",
-                          color: "#ffffff",
-                          position: "fixed",
-                          // right:'30%',
-                          right: size ? size : "30%",
-                          width: "25",
-                          height: "47px",
-                          top: "46px",
-                          display: "inline",
-                        }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  ) : (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <KeyboardDoubleArrowLeftIcon
-                        style={{ cursor: "pointer", color: "#09587C" }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  )}
-                  <div className="container-fluid">
-                    <div className="row">
-                      <div className="col-12 m-0 p-0">
-                        <RightTabPanel
-                          nodefromshowRoutes={selectedNodeId}
-                          setJobIdSidetoBottom={HandleJobfromOperations}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-              {selectedMenuItem === "Operations" && !expanded && (
-                <div
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "45px" }}
-                  className={`dashboard-right-container sticky-top partial`}
-                >
-                  <div className="pt-2" onClick={handleExpandToggle}>
-                    <KeyboardDoubleArrowLeftIcon
-                      style={{
-                        cursor: "pointer",
-                        backgroundColor: "#09587C",
-                        color: "#ffffff",
-                        width: "25",
-                        height: "47px",
-                        position: "fixed",
-                        right: "0%",
-                      }}
-                      onClick={handleExpandToggle}
-                    />
-                  </div>
-                </div>
-              )}
-              {selectedMenuItem === "Priority Job" && expanded && (
-                <Card
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "38px" }}
-                  className={`dashboard-right-container sticky-top ${
-                    active === "FG Mapping"
-                      ? expanded
-                        ? "expanded"
-                        : "partial"
-                      : ""
-                  }`}
-                >
-                  {expanded ? (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <RightSlider
-                        active={active}
-                        isExpandedFull={isExpandedFull}
-                        setIsExpandedFull={setIsExpandedFull}
-                        onclick={HandleIcon}
-                      />
-                      <KeyboardDoubleArrowRightIcon
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor: "#09587C",
-                          color: "#ffffff",
-                          position: "fixed",
-                          // right:'30%',
-                          right: size ? size : "30%",
-                          width: "25",
-                          height: "47px",
-                          top: "46px",
-                          display: "inline",
-                        }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  ) : (
-                    <div className="pt-2" onClick={handleExpandToggle}>
-                      <KeyboardDoubleArrowLeftIcon
-                        style={{ cursor: "pointer", color: "#09587C" }}
-                        onClick={handleExpandToggle}
-                      />
-                    </div>
-                  )}
-                  <div className="container-fluid">
-                    <div className="row">
-                      <div className="col-12 m-0 p-0">
-                        <Priorityjobspanel
-                          onClick={HandleJobIdtoJobPriority}
-                          onDoubleClick={HandleMultipleJobs}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-              {selectedMenuItem === "Priority Job" && !expanded && (
-                <div
-                  id="dasboard-right-container"
-                  style={{ position: "fixed", top: "45px" }}
-                  className={`dashboard-right-container sticky-top partial`}
-                >
-                  <div className="pt-2" onClick={handleExpandToggle}>
-                    <KeyboardDoubleArrowLeftIcon
-                      style={{
-                        cursor: "pointer",
-                        backgroundColor: "#09587C",
-                        color: "#ffffff",
-                        width: "25",
-                        height: "47px",
-                        position: "fixed",
-                        right: "0%",
-                      }}
-                      onClick={handleExpandToggle}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* {selectedMenuItem === "Operations"  &&
-                <RightTabPanel 
-                  nodefromshowRoutes={selectedNodeId} 
-                  setJobIdSidetoBottom={HandleJobfromOperations} />
-              } */}
-              {/* {selectedMenuItem === "Planning" && selectedMenuItem !== "Operations" &&
-                <RightOperationTabPanel
-                  sendtoPlanningtab={HandlesendtoPlanningtab}
-                  toRightOperationTabPanel={toRightOperationTabPanel}
-                />
-              } */}
-              {/* {selectedMenuItem === "Priority Job" && selectedMenuItem !== "Operations" &&
-                <Priorityjobspanel
-                  onClick={HandleJobIdtoJobPriority}
-                  onDoubleClick={HandleMultipleJobs}
-                />
-              } */}
-              {/* <Panel position="top-left">
-              <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "fixed",
-                    top: 60,
-                    // backgroundColor:'#1D9C9C',
-                  }}
-                >
-              <Typography
-                  variant="h5"
-                  noWrap
-                  component="a"
-                  // href="#app-bar-with-responsive-menu"
-                  sx={{
-                    mr: 2,
-                    flexGrow: 1,
-                    fontWeight: 700,
-                    letterSpacing: '.1rem',
-                    color: '#034661',
-                    textDecoration: 'none',
-                    // width:'200px'
-                  }}
-                >
-                      {selectedMenuItem}
-                </Typography>
-              </div>
-              </Panel> */}
               <Panel position="top-left">
                 <div
                   style={{
@@ -4148,7 +2982,6 @@ const ShowRoutes = ({
                         id="icon"
                         style={{ fontSize: "20px", color: "7C7C7C" }}
                       />
-                      {/* <FaPlus style={{color:'7C7C7C'}}/> */}
                     </Button>
                   </OverlayTrigger>
                   <OverlayTrigger
@@ -4191,47 +3024,6 @@ const ShowRoutes = ({
                   </OverlayTrigger>
                 </div>
                 <div>
-                  <div style={{ position: "absolute", top: 123, right: 0 }}>
-                    {nodes.map((node) => (
-                      <div key={node.id} className="node">
-                        {node.selected && (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginBottom: "5px",
-                              marginRight: "-5px",
-                            }}
-                          >
-                            {/* <OverlayTrigger
-                            delay={{ hide: 450, show: 300 }}
-                            overlay={(props) => (
-                              <Tooltip {...props}>Update Node</Tooltip>
-                            )}
-                            placement="left"
-                          >
-                            <Button
-                              className="edit-button mt-2"
-                              variant="primary"
-                              // size="sm"
-                              style={{ width: "50px",background:'#09587c' }}
-                              onClick={() => handleEditNode(node)}
-                            >
-                              <FaEdit/>
-                            </Button>
-                          </OverlayTrigger> */}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ position: "absolute", top: 165, right: 0 }}>
-                    {/* {edges.map((edge) => (
-                      <div key={edge.id} className="edge">
-                       
-                      </div>
-                    ))} */}
-                  </div>
                   <div style={{ position: "absolute", top: -22, right: -10 }}>
                     {selectedNodeForEdit && (
                       <NodeEditor
@@ -4242,7 +3034,6 @@ const ShowRoutes = ({
                     )}
                     {selectedEdgeForEdit && (
                       <EdgeEditPopup
-                        // edge = {selectedEdgeForEdit}
                         onCancel={handleEdgeCancel}
                         onSave={handleEdgeSave}
                       />
@@ -4250,35 +3041,9 @@ const ShowRoutes = ({
                   </div>
                 </div>
               </Panel>
-              <Panel>
-                {/* {showGraph && (
-                    <div
-                    style={{position:'absolute',
-                    top:'-250px',
-                    left:'485px'}}
-                    >
-                    <JobPriorityGraphs jobIdtopriority={jobIdtopriority}/>
-                    </div>
-                  )} */}
-              </Panel>
               {/* <Background variant="lines" /> */}
             </ReactFlow>
-            {hoveredNodeId && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: nodePosition.y + 100,
-                  left: nodePosition.x,
-                  background: "white",
-                  padding: "5px",
-                  border: "1px solid #ccc",
-                }}
-              >
-                {/* Render data related to hovered node */}
-                {/* Example: <p>{getDataForNodeId(hoveredNodeId)}</p> */}
-                <p>{`Data for node ${hoveredNodeId}`}</p>
-              </div>
-            )}
+            
             {selectedNodes && showNodePopup && (
               <BasicTabs
                 node={selectedNodes}
@@ -4289,15 +3054,12 @@ const ShowRoutes = ({
             )}
             {showPopup && (
               <BasicTabs
-                edge={selectedEdge}
-                onClose={onClosePopup}
-                onSaveEdge={onSavePopup}
+              onClose={onClosePopup}
+              onSaveEdge={onSavePopup}
+              edge={selectedEdge}
                 onEdgeContextMenu={onEdgeContextMenu}
               />
             )}
-            {/* {NodestoMachineGraph && NodestoMachineGraph.length > 0 && (
-              <MachineNode/>
-            )} */}
             {PopupEmp && (
               <div
                 className="popup"
@@ -4384,9 +3146,7 @@ const ShowRoutes = ({
               </DialogActions>
             </Dialog>
           </div>
-        </ReactFlowProvider>
       </div>
-      <ToastContainer />
       {showAlert && (
         <ConfirmModal
           nodeData={showAlert}
@@ -4409,34 +3169,7 @@ const ShowRoutes = ({
           sendNodeType={HandleNodeType}
         />
       )}
-      {open && (
-      //   <Modal
-      //   open={open}
-      //   onClose={handleCloseDeletPopup}
-      //   aria-labelledby="modal-modal-title"
-      //   aria-describedby="modal-modal-description"
-      // >
-      //   <Box sx={style}>
-      //     <FaRegRectangleXmark 
-      //               onClick={handleCloseDeletPopup}
-      //               style={{
-      //                         fontSize:'20px',
-      //                         color:'red',
-      //                         position:'absolute',
-      //                         right:1,
-      //                         top:0,
-      //                         cursor:'pointer'
-      //                         }}/>
-      //     <Typography id="modal-modal-title" variant="h6" component="h2">
-      //     Are you sure you want to delete the Machine Node? This action may also delete all the dependent nodes.
-      //     </Typography>
-
-      //     {/* Use proper label for radio buttons */}
-      //     <Box mt={2}>
-      //       hello
-      //     </Box>
-      //   </Box>
-      // </Modal>
+      
       <React.Fragment>
       <Dialog
         open={open}
@@ -4448,12 +3181,6 @@ const ShowRoutes = ({
           Are you sure you want to delete the Machine Node? This action may also 
           delete all the dependent nodes.
         </DialogTitle>
-        {/* <DialogContent>
-          <DialogContentText>
-          Are you sure you want to delete the Machine Node? This action may also 
-          delete all the dependent nodes.
-          </DialogContentText>
-        </DialogContent> */}
         <DialogActions>
           <Button onClick={deleteSelectedElements}>Yes</Button>
           <Button autoFocus onClick={handleCloseDeletPopup}>
@@ -4462,7 +3189,6 @@ const ShowRoutes = ({
         </DialogActions>
       </Dialog>
     </React.Fragment>
-      )}
 
       {openUnselected && (
         <React.Fragment>
@@ -4475,12 +3201,6 @@ const ShowRoutes = ({
           <DialogTitle style={{ cursor: 'move' }} id="draggable-dialog-title">
             Please Select the Node to Delete.
           </DialogTitle>
-          {/* <DialogContent>
-            <DialogContentText>
-            Are you sure you want to delete the Machine Node? This action may also 
-            delete all the dependent nodes.
-            </DialogContentText>
-          </DialogContent> */}
           <DialogActions>
             <Button onClick={handleCloseUnselectedPopup}>OK</Button>
           </DialogActions>

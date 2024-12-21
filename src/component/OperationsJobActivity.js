@@ -1,5 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
-import { getActivities, getOADetails } from "../api/shovelDetails";
+import {
+  getActivities,
+  getNodeMaster,
+  getOADetails,
+} from "../api/shovelDetails";
 import { FaPlus, FaXmark } from "react-icons/fa6";
 import Button from "@mui/material/Button";
 import axios from "axios";
@@ -36,12 +40,12 @@ function OperationsJobActivity({
   setSendToInput,
   setSendToOutput,
   emptyrecentdata,
-  tableHeight
+  tableHeight,
 }) {
   const [open, setOpen] = React.useState(false);
   const [openBreakDown, setOpenBreakDown] = React.useState(false);
   const [RecentActivitydata, setRecentActvityData] = useState();
-  console.log(emptyrecentdata,"emptyrecentdata")
+  console.log(emptyrecentdata, "emptyrecentdata");
   const handleClickOpen = (data) => {
     setOpen(true);
     setRecentActvityData(data);
@@ -61,14 +65,8 @@ function OperationsJobActivity({
 
   const [Activitydata, setActivity] = useState([]);
   const [Oadetails, setOadetails] = useState([]);
-  console.log(JobfromOperations, "JobfromOperations");
-  console.log(
-    Activitydata.filter(
-      (item1) => item1?.jobId == JobfromOperations?.item
-      // && item?.nodeId == JobfromOperations?.JobfromOperations?.nodeId
-    ).map((item) => item.id),
-    "JobfromOperations"
-  );
+  const [nodeMasterData, setnodeMasterData] = useState([]);
+
   const showActivities = async (key) => {
     const responsedata = await getActivities();
     setActivity(responsedata, key);
@@ -77,9 +75,15 @@ function OperationsJobActivity({
     const responsedata = await getOADetails();
     setOadetails(responsedata, key);
   };
+
+  const showNodeMaster = async (key) => {
+    const responsedata = await getNodeMaster();
+    setnodeMasterData(responsedata, key);
+  };
   useEffect(() => {
     showActivities();
     showOA_details();
+    showNodeMaster();
   }, []);
 
   console.log(Activitydata, "Activitydata");
@@ -392,7 +396,7 @@ function OperationsJobActivity({
     return getName;
   };
   const [Employee, setEmployee] = useState(getEmployeeName());
-  console.log(currentdate,"payload")
+  console.log(currentdate, "payload");
   const Activity = {
     shiftNumber: shiftData, // selected shiftNumber
     currentdate: currentdate, //cuurent date is default machine date
@@ -559,10 +563,11 @@ function OperationsJobActivity({
       nodeId: nodeId.toString(),
       employeeName: getEmployeeName(),
       jobId: jobId,
-      userId : auth.empId.toString()
+      userId: auth.empId.toString(),
     };
     console.log(data, "payload");
 
+    UpdateMachineNode(nodeId, activityType);
     axios
       .post(`${BASE_URL}/api/activitylog`, data)
       .then((res) => {
@@ -580,7 +585,7 @@ function OperationsJobActivity({
       });
       setActivitydatatoInput(data);
       return;
-    } 
+    }
     if (activityType === "Maintenance") {
       // handleClickOpen(data);
       onClick({
@@ -588,7 +593,7 @@ function OperationsJobActivity({
       });
       setActivitydatatoInput(data);
       return;
-    } 
+    }
     if(activityType === "ON") {
       onClick({
         // setvalue: 1,
@@ -600,6 +605,86 @@ function OperationsJobActivity({
   };
 
   console.log(Activity.enddate, "enddate");
+
+  const getColotbasedOnActivity = (activityType) => {
+        const a =   activityType === "Maintenance" ? "#FFA726" : activityType === "BreakDown" ? "#ED2226" :
+                    activityType === "OFF" ? "#ED2226" : activityType === "Holiday" ? "#29B6F6" : ""
+        return a
+  }
+
+  const UpdateMachineNode = (node, activityType) => {
+
+    // Check if the node data exists
+    if (nodeMasterData.length > 0) {
+      const nodedata = nodeMasterData.filter(
+        (item) => parseInt(item.nodeId) === parseInt(node)
+      )[0];
+      const edite = {
+        id: nodedata.id,
+        branchId: auth.branchId.toString(),
+        nodeCategory: nodedata.nodeCategory,
+        unit1Measurable: nodedata.unit1Measurable,
+        parentNode: nodedata.parentNode,
+        extent: nodedata.extent,
+        type: nodedata.type,
+        unit2Mandatory: nodedata.unit2Mandatory,
+        iconId: nodedata.iconId,
+        itemDescription: nodedata.itemDescription,
+        nodeImage: nodedata.nodeImage,
+        percentage_rejects: nodedata.percentage_rejects,
+        nodeCategoryId: nodedata.nodeCategoryId,
+        nodeType: nodedata.nodeType,
+        nodeName: nodedata.nodeName,
+        width: nodedata.width,
+        height: nodedata.height,
+        borderRadius: nodedata.borderRadius,
+        xPosition: nodedata.xPosition,
+        yPosition: nodedata.yPosition,
+        borderColor: nodedata.borderColor,
+        borderWidth: nodedata.borderWidth,
+        borderStyle: nodedata.borderStyle,
+        fillColor: nodedata.fillColor,
+        fillTransparency: nodedata.fillTransparency,
+        isRootNode: nodedata.isRootNode,
+        isParent: nodedata.isParent,
+        formula: nodedata.formula,
+        fuelUsed: nodedata.fuelUsed,
+        fuelUnitsId: nodedata.fuelUnitsId,
+        capacity: nodedata.capacity,
+        capacityUnitsId: nodedata.capacityUnitsId,
+        sourcePosition: nodedata.sourcePosition,
+        targetPosition: nodedata.targetPosition,
+        FontColor: nodedata.FontColor,
+        FontStyle: nodedata.FontStyle,
+        FontSize: nodedata.FontSize,
+        userId: auth.empId.toString(),
+        borderLeftColor:getColotbasedOnActivity(activityType)
+          
+      };
+      console.log("Updated Node Data:", nodedata);
+      console.log("Updated Node Data:", edite);
+
+      // Uncomment the axios call when ready
+      axios
+        // .put(`${BASE_URL}/api/nodeMaster/${parseInt(node)}`, payload)
+        .put(`${BASE_URL}/api/nodeMaster/${node}`, edite)
+        .then((response) => {
+          console.log("Data saved successfully", response.data);
+          toast.success(
+            <span>
+              <strong>Successfully</strong> Updated.
+            </span>,
+            { position: toast.POSITION.BOTTOM_RIGHT, className: "custom-toast" }
+          );
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+        });
+    } else {
+      console.error("Node not found with the given ID:", node);
+    }
+  };
+  // }
 
   const CancelSubmit = () => {
     setNewRowActive(false);
@@ -614,9 +699,9 @@ function OperationsJobActivity({
     setShowForm1(true);
     setRollSlitEnable(false);
     setBatchCount(1);
-    setOpen(false)
-    setNewRowActive(false)
-    setOpenBreakDown(false)
+    setOpen(false);
+    setNewRowActive(false);
+    setOpenBreakDown(false);
   };
   console.log("enddate:", new Date(enddate));
 
@@ -971,7 +1056,7 @@ function OperationsJobActivity({
       .post(`${BASE_URL}/api/maintenance`, payload)
       .then((res) => {
         console.log(res, "payload");
-        CancelSubmit()
+        CancelSubmit();
       })
       .catch((err) => {
         console.log(err, "Error");
@@ -980,11 +1065,11 @@ function OperationsJobActivity({
 
   const HandleSubmitBreakDown = () => {
     const payload = {
-      BreakDowneId : getRecentActivity().toString(),
-      Reason : BreakDownDesc,
-      date : currentdate,
-      Department : "",
-      Equipment : Activity?.nodeId,
+      BreakDowneId: getRecentActivity().toString(),
+      Reason: BreakDownDesc,
+      date: currentdate,
+      Department: "",
+      Equipment: Activity?.nodeId,
       userId: auth?.empId.toString(),
     };
     console.log(payload, "payload");
@@ -992,7 +1077,7 @@ function OperationsJobActivity({
       .post(`${BASE_URL}/api/breakdown`, payload)
       .then((res) => {
         console.log(res, "payload");
-        CancelSubmit()
+        CancelSubmit();
       })
       .catch((err) => {
         console.log(err, "Error");
@@ -1001,23 +1086,25 @@ function OperationsJobActivity({
 
   const [height, setHeight] = useState();
   useEffect(() => {
-    console.log(tableHeight,"heightt")
-    if(tableHeight > '1' && tableHeight < '360'){
-      setHeight(tableHeight-'100');
-    }
-    else{
-      setHeight('350px')
+    console.log(tableHeight, "heightt");
+    if (tableHeight > "1" && tableHeight < "360") {
+      setHeight(tableHeight - "100");
+    } else {
+      setHeight("350px");
     }
   }, []);
   return (
     <div>
       <div className="container-fluid">
-        <div className="row" style={{
-          // height: tableHeight ? tableHeight : '200px',
-          height:  height,
-          overflowY: "scroll",
-          overflowX :"hidden"
-        }}>
+        <div
+          className="row"
+          style={{
+            // height: tableHeight ? tableHeight : '200px',
+            height: height,
+            overflowY: "scroll",
+            overflowX: "hidden",
+          }}
+        >
           <div className="col-12">
             <table className="table table-bordered table-striped">
               <thead>

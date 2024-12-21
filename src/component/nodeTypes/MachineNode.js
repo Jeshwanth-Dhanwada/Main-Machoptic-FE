@@ -27,12 +27,13 @@ export default memo((props) => {
   const [imageSrc, setImageSrc] = useState([]);
   useEffect(() => {
     const image = Nodedata.filter((item) => item.nodeName == data.label).map((item) => item.nodeImage)
+    console.log(image,"imageSrc")
     const height = Nodedata.filter((item) => item.nodeName == data.label).map((item) => item.height)
     const width = Nodedata.filter((item) =>  item.nodeName == data.label).map((item) => item.width)
     setheight(height)
     setwidth(width)
     // Fetch the image from your server
-    axios.get(`http://localhost:5001/image/${image}`, { responseType: 'blob' })
+    axios.get(`${BASE_URL}/image/${image}`, { responseType: 'blob' })
       .then(response => {
         const imageUrl = URL.createObjectURL(response.data);
         setImageSrc(imageUrl)
@@ -47,17 +48,18 @@ export default memo((props) => {
     };
   }, [data.label,Nodedata])
 
+  console.log(imageSrc,"imageSrc")
 
   return (
     <div>
         <img src={imageSrc} 
-             style={{ width: '297px', 
-                      height: '178px', 
+             style={{ width: '130px', 
+                      height: '80px', 
                       borderRadius:'10px',
                       backgroundColor:'#FFFFFF',
                       position:'absolute',
-                      left:'-60px',
-                      top:'0px'
+                      left:'100px',
+                      top:'-30px'
                    }} alt='machine'>
                    </img>
     </div>

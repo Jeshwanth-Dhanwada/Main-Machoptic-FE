@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
+  getEdges,
+  getItemmaster,
   getJobAssign,
   getNodeMaster,
   getOADetails,
@@ -25,7 +27,9 @@ function JobMapping({tableHeight}) {
   const {auth} = useContext(AuthContext)
   const [jobAssigndata, setJobAssigndata] = useState([]);
   const [Nodedata, setNodedata] = useState([]);
+  const [Edgedata, setEdgedata] = useState([]);
   const [Oa_details, setOa_details] = useState([]);
+  const [ItemMaster, setItemMaster] = useState([]);
   const [shiftdata, setShiftdata] = useState([]);
 
   const [OpenLoader, setOpenLoader] = useState([]);
@@ -37,9 +41,20 @@ function JobMapping({tableHeight}) {
     setJobAssigndata(responsedata, key);
     setOpenLoader(false);
   };
+
+  const showItemMasterdata = async (key) => {
+    setOpenLoader(true)
+    const responsedata = await getItemmaster();
+    setItemMaster(responsedata, key);
+    setOpenLoader(false);
+  };
   const showNodesdata = async (key) => {
     const responsedata = await getNodeMaster();
     setNodedata(responsedata, key);
+  };
+  const showEdgesdata = async (key) => {
+    const responsedata = await getEdges();
+    setEdgedata(responsedata, key);
   };
   const showOa_detailsdata = async (key) => {
     const responsedata = await getOADetails();
@@ -54,6 +69,8 @@ function JobMapping({tableHeight}) {
     showNodesdata();
     showOa_detailsdata();
     showShiftsdata();
+    showItemMasterdata()
+    showEdgesdata()
   }, []);
 
   function getNodesdata() {
@@ -246,11 +263,35 @@ function JobMapping({tableHeight}) {
   const [jobId, setjobId] = useState([])
   const [nodeId, setnodeId] = useState([])
 
+  const [showdialog, setshowdialog] = useState(false)
+  const [outstandingQtydialog, setoutstandingQtydialog] = useState(false)
+  const handleCloseshowdialog = () => {
+    setshowdialog(false);
+  };
+
   const handleJobId = (e) => {
     setjobId(e.target.value)
   }
   const handleNodeId = (e) => {
     setnodeId(e.target.value)
+    const selectedjobId = jobId
+    const it_code = Oa_details.find((item)=>item.jobId == selectedjobId)?.IT_CODE
+    const description = ItemMaster.find((item)=>item.IT_CODE == it_code)?.IT_NAME
+    console.log(selectedjobId,"jobassign")
+    console.log(it_code,"jobassign")
+    console.log(description,"jobassign")
+    
+    const routePath = ItemMaster.filter((item) => item?.IT_CODE == it_code)[0];
+    const routeForNode = Edgedata.filter((item) => item?.sourceNodeId == nodeId)[0];
+    console.log(routePath,"jobassign")
+    console.log(routeForNode,"jobassign")
+
+    if (routePath.Route !== routeForNode?.routeId) {
+      setshowdialog(true)
+      // setjobId("")
+      setnodeId("")
+      return;
+    }
   }
 
   const handleCreateNode = (nodeId,jobId) => {
@@ -319,21 +360,21 @@ function JobMapping({tableHeight}) {
       node:node
 
     }
-    console.log(payload);
-   axios
-     .post(`${BASE_URL}/api/jobassign`,payload)
-     .then((response) => {
-        showJobAssigndata()
-          console.log('New row added successfully', response.data);
-          toast.success(<span><strong>Successfully! </strong> Added.</span>);
-          setNewRowActive(false);
-          handleCreateNode(nodeId,jobId)
-          setjobId("");
-          setnodeId("");
-      })
-      .catch((error) => {
-        console.error('Error adding new row:', error);
-      });
+    console.log(payload,"checkjobsubmit");
+  //  axios
+  //    .post(`${BASE_URL}/api/jobassign`,payload)
+  //    .then((response) => {
+  //       showJobAssigndata()
+  //         console.log('New row added successfully', response.data);
+  //         toast.success(<span><strong>Successfully! </strong> Added.</span>);
+  //         setNewRowActive(false);
+  //         handleCreateNode(nodeId,jobId)
+  //         setjobId("");
+  //         setnodeId("");
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error adding new row:', error);
+  //     });
   }
 
   const [searchInput, setSearchInput] = useState([]);
@@ -373,14 +414,8 @@ function JobMapping({tableHeight}) {
 
   return (
     <div>
-      <div className="container-fluid" style={{
-          // height: tableHeight ? tableHeight : '200px',
-          height:  height,
-          overflowY: "scroll",
-          overflowX :"hidden"
-        }}>
-        <div className="row">
-        <div className="col-3 d-flex flex-row justify-content-end m-1">
+      <div className="container-fluid">
+      <div className="col-3 d-flex flex-row justify-content-end m-1">
           <input
             type="text"
             className="form-control"
@@ -399,12 +434,17 @@ function JobMapping({tableHeight}) {
             </Button>
           </Tooltip>
         </div>
-          <div
-            className="col-12"
-            style={{ height: "400px", overflowY: "auto" }}
-          >
+      </div>
+      <div className="container-fluid" style={{
+          // height: tableHeight ? tableHeight : '200px',
+          height:  height,
+          overflowY: "scroll",
+          overflowX :"hidden"
+        }}>
+        <div className="row">
+          <div className="col-12">
             <table className="table table-bordered table-striped">
-              <thead>
+              <thead className="sticky-top">
                 <tr>
                   <th>Id</th>
                   <th>Job Id</th>
@@ -781,6 +821,35 @@ function JobMapping({tableHeight}) {
             <CircularProgress size={80} color="inherit" />
           </Backdrop>
           )}
+          <React.Fragment>
+              <Dialog
+                open={showdialog}
+                onClose={handleCloseshowdialog}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+                PaperProps={{
+                  style: {
+                    marginTop: -350, // Adjust the marginTop value as needed
+                    width: '40%'
+                  },
+                }}
+              >
+                <DialogTitle id="alert-dialog-title">
+                  {/* {"Use Google's location service?"} */}
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    The Routes must be same in order to assign Job
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  {/* <Button onClick={() => handleDeleteJobs(item.id)} autoFocus>
+                    Yes
+                  </Button> */}
+                  <Button onClick={handleCloseshowdialog}>OK</Button>
+                </DialogActions>
+              </Dialog>
+            </React.Fragment>
     </div>
   );
 }

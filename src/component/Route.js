@@ -99,11 +99,12 @@ const RoutePopup = ({
           targetNodeId: data.targetNodeId,
           label: data.label,
           style: { strokeWidth: data.edgeThickness, stroke: data.edgeColor },
+          // style: { strokeWidth: data.edgeThickness, stroke: data.edgeColor },
           markerEnd: {
-            type: MarkerType.Arrow,
+            type: MarkerType.ArrowClosed,
             width: 15,
-            height: 25,
-            color: "#000",
+            height: 15,
+            color: "#1C9C9B",
             arrow: data.arrow,
           },
         }));
@@ -132,7 +133,7 @@ const RoutePopup = ({
       routeDescription: editedItem.routeDescription,
       optional: editedItem.optional,
       productCategory: editedItem.productCategory,
-      userId: auth.empId,
+      userId: auth.empId.toString(),
     };
     console.log(edite.routeId, "edite");
     console.log(editedItem, "editedItem");
@@ -478,39 +479,16 @@ const RoutePopup = ({
                   className=" align-items-center"
                   style={{ textAlign: "center" }}
                 >
-                  <button
-                    style={{
-                      width: "20px",
-                      border: "none",
-                      backgroundColor: "transparent",
-                    }}
-                    onClick={() => handleDelete(index)}
-                  >
-                    <AiFillDelete style={{ color: "red" }} />
-                  </button>
-
                   {editedIndex === index ? (
-                    <button
-                      style={{
-                        width: "20px",
-                        border: "none",
-                        color: "green",
-                      }}
-                      onClick={handleSave}
-                    >
-                      <FaCheck style={{ color: "green" }} />
-                    </button>
+                    <FaXmark id="FaMinus"  onClick={handleCancel}/>
                   ) : (
-                    <button
-                      style={{
-                        width: "25px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                      }}
-                      onClick={() => handleEdit(index)}
-                    >
-                      <FaEdit style={{ color: "blue" }} />
-                    </button>
+                    <AiFillDelete id="FaMinus" onClick={() => handleDelete(index)}/>
+                  )}
+                  &nbsp;&nbsp;
+                  {editedIndex === index ? (
+                      <FaCheck id="FaCheck" onClick={handleSave}/>
+                  ) : (
+                      <FaEdit id="FaEdit" onClick={() => handleEdit(index)}/>
                   )}
                   <button
                     style={{
@@ -560,19 +538,9 @@ const RoutePopup = ({
                   />
                 </td>
                 <td>
-                  <button
-                    style={{ border: "none" }}
-                    onClick={handleNewRowSubmit}
-                  >
-                    <FaCheck style={{ color: "green" }} />
-                  </button>{" "}
-                  &nbsp;
-                  <button
-                    style={{ border: "none" }}
-                    onClick={() => setNewRowActive(false)}
-                  >
-                    <FaXmark style={{ color: "red" }} />
-                  </button>
+                    <FaXmark id="FaMinus" onClick={() => setNewRowActive(false)}/>
+                  &nbsp;&nbsp;
+                    <FaCheck id="FaCheck" onClick={handleNewRowSubmit}/>
                 </td>
               </tr>
             )}

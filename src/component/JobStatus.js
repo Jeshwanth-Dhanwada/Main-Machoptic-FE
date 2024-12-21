@@ -39,7 +39,7 @@ const Job_Status = () => {
     // jobassign--------
     useEffect(() => {
         // Fetch data from the API when the component mounts
-        const apiUrl = " http://localhost:5000/api/jobassign";
+        const apiUrl = `${BASE_URL}/api/api/jobassign`;
         axios
             .get(apiUrl)
             .then((response) => {

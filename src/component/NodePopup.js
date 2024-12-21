@@ -51,6 +51,8 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
   const [xPosition, setXPosition] = useState(node?.position.x);
   const [yPosition, setYPosition] = useState(node?.position.y);
   const [fontsize, setFontSize] = useState(node?.style.fontSize);
+  const [borderLeftColor, setborderLeftColor] = useState(node?.style?.borderLeftColor);
+  const [borderLeftWidth, setborderLeftWidth] = useState(node?.style?.borderLeftWidth);
   const [width, setWidth] = useState(node?.width);
   const [height, setHeight] = useState(node?.height);
   const [borderRadius, setborderRadius] = useState(node?.style.borderRadius);
@@ -175,11 +177,11 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
       setFontColor("#000000");
     } else if (event.target.value === "Machine") {
       setWidth("300px");
-      if (file) {
-        setHeight("220px");
-      } else {
-        setHeight("60px");
-      }
+      // if (file) {
+      //   setHeight("100px");
+      // } else {
+        setHeight("100px");
+      // }
       setborderRadius("10px");
       const color = "#CCCCCC";
       setBorderColor(color);
@@ -187,8 +189,10 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
       setMeasurable("No");
       setMandatory("No");
       setNodeCategory("");
-      setBgColor("#EEEEEE");
+      setBgColor("#FFFFFF");
       setFontColor("#000000");
+      setborderLeftColor('#08A64F')
+      setborderLeftWidth('15px')
     }
   };
 
@@ -298,10 +302,10 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
     setPreview(URL.createObjectURL(event.target.files[0]));
 
     if (event.target.files) {
-      setHeight("220px");
+      setHeight("100px");
       setWidth("300px");
     } else {
-      setHeight("60px");
+      setHeight("100px");
       setWidth("300px");
     }
   };
@@ -393,47 +397,54 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
     const fd = new FormData();
     fd.append("file", fileTODB);
 
-    await axios
-      .post("http://localhost:5001/upload-image", fd, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((response) => {
-        console.log(response, "save");
-      })
-      .catch((err) => console.log(err, "save"));
+    console.log(fileTODB,"imageSrc")
+    console.log(fd,"imageSrc")
 
-    if (assImageId.length > 0) {
-      axios
-        .delete(`http://localhost:5001/image/${assImageId[0].nodeImage}`, {
+    if(fd){
+      await axios
+        .post(`${BASE_URL}/upload-image`, fd, {
+          
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
         .then((response) => {
-          console.log(response, "deleted Succesfully");
-          setFile();
-          setFileTODB();
-          setHeight("60px");
+          console.log(response, "save");
         })
         .catch((err) => console.log(err, "save"));
     }
 
-    if (assImageId.length > 0) {
-      axios
-        .delete(`${BASE_URL}/api/nodeMaster/${assImageId[0].nodeId}`)
-        .then((response) => {
-          console.log("Node deleted successfully", response.data);
-          setPreview();
-          setHeight("60px");
-        })
-        .catch((error) => {
-          console.error("Error deleting node:", error);
-        });
-    }
+    // if (assImageId.length > 0) {
+    //   axios
+    //     .delete(`${BASE_URL}/api/image/${assImageId[0].nodeImage}`, {
+    //       headers: {
+    //         "Content-Type": "multipart/form-data",
+    //       },
+    //     })
+    //     .then((response) => {
+    //       console.log(response, "deleted Succesfully");
+    //       setFile();
+    //       setFileTODB();
+    //       setHeight("60px");
+    //     })
+    //     .catch((err) => console.log(err, "save"));
+    // }
+
+    // if (assImageId.length > 0) {
+    //   axios
+    //     .delete(`${BASE_URL}/api/nodeMaster/${assImageId[0].nodeId}`)
+    //     .then((response) => {
+    //       console.log("Node deleted successfully", response.data);
+    //       setPreview();
+    //       setHeight("60px");
+    //     })
+    //     .catch((error) => {
+    //       console.error("Error deleting node:", error);
+    //     });
+    // }
 
     // Calculate the center position for the label within the node
+   
     const labelX = node.position.x + node.style.width / 2;
     const labelY = node.position.y + node.style.height / 2;
     // Call the onSave function with the updated no de object
@@ -465,6 +476,8 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
         borderWidth: borderWidth,
         borderStyle: borderStyle,
         borderRadius: borderRadius,
+        borderLeftColor: borderLeftColor,
+        borderLeftWidth: borderLeftWidth,
         // // textAlign:'center',
         // display: "flex",
         // justifyContent: "center" /* Horizontally center */,
@@ -472,7 +485,7 @@ const NodesPopup = ({ node, onClose, onSave, onClick }) => {
       },
     });
 
-    if (!Nodedata.some((item) => item.nodeImage === file) && file !== "") {
+    if (fd && !Nodedata.some((item) => item.nodeImage === file) && file !== "") {
       console.log("filename Incoming");
       const NewImageNode = {
         parenId: "",

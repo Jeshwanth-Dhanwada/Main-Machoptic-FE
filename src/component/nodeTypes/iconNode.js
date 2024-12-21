@@ -1,10 +1,17 @@
-import React, { memo, useEffect,useRef } from 'react';
-import PersonIcon from '@mui/icons-material/Person';
-import { IconButton, Tooltip } from '@mui/material';
+import React, { memo, useEffect, useRef } from "react";
+import PersonIcon from "@mui/icons-material/Person";
+import { Tooltip } from "@mui/material";
 import { BiSolidCalendarCheck } from "react-icons/bi";
 import { MdDeviceHub } from "react-icons/md";
 import { BsMinecartLoaded } from "react-icons/bs";
-import { getOADetails, getEmployees, getItemmaster, getDeviceMaster } from '../../api/shovelDetails';
+import {
+  getOADetails,
+  getEmployees,
+  getItemmaster,
+  getDeviceMaster,
+} from "../../api/shovelDetails";
+
+
 export default memo((props) => {
   const data = props.data;
   const [Oadetails, setOadetails] = React.useState([]);
@@ -40,42 +47,74 @@ export default memo((props) => {
   const showEMployess = async (key) => {
     const responsedata = await getEmployees();
     setEmployees(responsedata, key);
-  }
+  };
   const showItemMaster = async (key) => {
     const responsedata = await getItemmaster();
     setItemMaster(responsedata, key);
-  }
+  };
   const showDeviceMaster = async (key) => {
     const responsedata = await getDeviceMaster();
     setdeviceMaster(responsedata, key);
-  }
+  };
+  const isEmployee = Employees.some((item) => item.userName === data.label);
+  const isJobs = Oadetails.some((item) => String(item.IT_NAME) === String(data.label))
+
+  
   return (
     <div style={data.style}>
-      {/* <div onDoubleClick={(e) => data.onIconDoubbleClick(e,props)} style={data.style}> */}
       <Tooltip title={data.label}>
         <span>
-          {Oadetails.some((item) => item.IT_NAME == data.label) && (
-            <div className='btn' style={{ border: '1px solid grey', backgroundColor: '#FFFFFF' }}>
-              <BiSolidCalendarCheck style={{ fontSize: '23px' }} />
-            </div>
-          )}
-          {Employees.some((item) => item.userName == data.label) && (
-            <div className='btn' style={{ border: '1px solid grey', backgroundColor: '#FFFFFF' }}>
-              <PersonIcon  style={{ fontSize: '23px' }} />
-            </div>
-          )}
-          {deviceMaster.some((item) => item.deviceName == data.label) && (
-            <div className='btn btn-white' style={{ border: '1px solid grey', backgroundColor: '#FFFFFF' }}>
-              <MdDeviceHub style={{ fontSize: '23px' }} />
-            </div>
-          )}
-          {ItemMaster.some((item) => item.IT_NAME == data.label && (item.Film_Name_ID == "" || item.Fabric_Name_ID == "")) && (
-            <div className='btn btn-white' style={{ border: '1px solid grey' }}>
-              <BsMinecartLoaded  style={{ fontSize: '23px' }} />
+          {Oadetails.find((item) => String(item.IT_NAME) === String(data.label)) && (
+            <div className="btn" id="IconNodeButton">
+              <BiSolidCalendarCheck id="IconNodeColor" />
             </div>
           )}
         </span>
       </Tooltip>
+
+      <Tooltip title={data.label}>
+        <span>
+
+          {Employees.some((item) => item.userName === data.label) && (
+            <div className="btn" id="IconNodeButton">
+              <PersonIcon id="IconNodeColor"  />
+            </div>
+            // <Box sx={{ color: 'action.active' }}>
+            //   <Badge color="secondary" variant="dot" 
+            //      sx={{'.MuiBadge-dot': {backgroundColor: '#F18821',}}}>
+            //     <div className="btn" id="IconNodeButton">
+            //       <PersonIcon id="IconNodeColor" />
+            //     </div>
+            //   </Badge>
+            // </Box>
+
+          )}
+        </span>
+      </Tooltip>
+      <Tooltip title={data.label}>
+        <span>
+
+          {deviceMaster.some((item) => item.deviceName === data.label) && (
+            <div className="btn" id="IconNodeButton">
+              <MdDeviceHub id="IconNodeColor"/>
+            </div>
+          )}
+          </span>
+        </Tooltip>
+        <Tooltip title={data.label}>
+        <span>
+          {ItemMaster.some(
+            (item) =>
+              item.IT_NAME === data.label &&
+              (item.Film_Name_ID === "" || item.Fabric_Name_ID === "")
+          ) && (
+            <div className="btn" id="IconNodeButton">
+              <BsMinecartLoaded id="IconNodeColor" />
+            </div>
+          )}
+        </span>
+        </Tooltip>
+        
     </div>
   );
 });

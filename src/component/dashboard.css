@@ -83,7 +83,7 @@
 
 .app-footer-content {
   /* background-color: #648198; */
-  background-color: #F5F8F9;
+  background-color: #F7F7F7;
   /* background-color: #cfe8fc; */
   /* background-image: url("../../public/lalit-kumar-HpPmiduLDC0-unsplash.jpg");
   background-size: cover; /* Set the background image to cover the entire element */
@@ -127,4 +127,16 @@
 #InputSize{
   width: 50px;
   flex: 1;
+}
+
+#IconNodeButton{
+  border: 1px solid whitesmoke;
+  background-color: #FFFFFF;
+  box-shadow: 0px 2px 5px #888;
+}
+
+#IconNodeColor{
+  color: #024562;
+  font-size: 23px;
+  background-color: #FFFFFF;
 }

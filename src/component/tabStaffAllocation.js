@@ -20,7 +20,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import { Backdrop, CircularProgress, Tooltip } from "@mui/material";
 import AuthContext from "../context/AuthProvider";
 
-function StaffAllocation({tableHeight,sendtoConfigurations}) {
+function StaffAllocation({ tableHeight, sendtoConfigurations }) {
   const { auth } = useContext(AuthContext);
   const [EmpNodeMapping, setEmpNodeMapping] = useState([]);
   const [Employeedata, setEmployeedata] = useState([]);
@@ -78,26 +78,23 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
       empnodemapId: editedItem.empnodemapId,
       emp: editedItem.emp.empId,
       node: editedItem.node.nodeId,
-      branchId: auth.branchId,
+      branchId: auth.branchId.toString(),
       isActive: editedItem.isActive,
-      userId: editedItem.userId,
+      userId: auth.empId.toString(),
       nodeType: editedItem.nodeType,
       default: editedItem.default,
       primary: editedItem.primary,
+      date:getDate()
     };
     console.log(edite);
     axios
-      .put(
-        `${BASE_URL}/api/employeeNodeMapping/${editedItem.empnodemapId}`,
-        edite
-      )
+      .put(`${BASE_URL}/api/employeeNodeMapping/${editedItem.empnodemapId}`,edite)
       .then((response) => {
         console.log("Data saved successfully", response.data);
         setEditedIndex(null);
         toast.success(
-          <span>
-            <strong>Successfully</strong> Updated.
-          </span>
+          <span><strong>Successfully</strong> Updated.</span>,
+          {position: toast.POSITION.BOTTOM_RIGHT,className: "custom-toast"}
         );
       })
       .catch((error) => {
@@ -111,6 +108,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
     axios
       .delete(`${BASE_URL}/api/nodeMaster/${nodeId}`)
       .then((response) => {
+        showNodes()
         console.log("deleted successfully", response.data);
       })
       .catch((error) => {
@@ -118,25 +116,26 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
       });
   };
 
-  const handleDeleteStaffMapping = (empnodeId) => {
-    console.log(empnodeId);
+  const handleDeleteStaffMapping = () => {
+    console.log(empNodeId,"checkstaff");
     const findEmpId = EmpNodeMapping.filter(
-      (item) => item.empnodemapId == empnodeId
+      (item) => item.empnodemapId == empNodeId
     ).map((item) => item.emp.empId);
-    console.log(findEmpId);
+    console.log(findEmpId,"checkstaff");
     const findNodeId = nodedata
-      .filter((item) => item.iconId == findEmpId)
+    .filter((item) => item.nodeType === 'employee' && item.iconId == findEmpId)
       .map((item) => item.nodeId);
-    console.log(findNodeId);
+    console.log(findNodeId,"checkstaff");
     deleteNode(findNodeId);
     axios
-      .delete(`${BASE_URL}/api/employeeNodeMapping/${empnodeId}`)
+      .delete(`${BASE_URL}/api/employeeNodeMapping/${empNodeId}`)
       .then((response) => {
+        showEmpNodeMapping()
         console.log("Node deleted successfully", response.data);
+        sendtoConfigurations(empNodeId);
         toast.success(
-          <span>
-            <strong>Deleted</strong> successfully.
-          </span>
+          <span><strong>Deleted</strong> successfully.</span>,
+          {position: toast.POSITION.BOTTOM_RIGHT,className: "custom-toast"}
         );
         setOpenDelete(false);
       })
@@ -147,8 +146,10 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
   };
 
   const [opendeletepopup, setOpenDelete] = useState(false);
-  const handleClickdeletepopup = () => {
+  const [empNodeId, setEmpNodeId] = useState([])
+  const handleClickdeletepopup = (Id) => {
     setOpenDelete(true);
+    setEmpNodeId(Id)
   };
   const handleDeleteClose = () => {
     setOpenDelete(false);
@@ -182,7 +183,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
   };
 
   const handleCreateNode = (nodeId, empId) => {
-    const deviceNode = {
+    const employeeNode = {
       id: uuidv4(), //empData.deviceName + "",
       nodeCategory: "",
       nodeCategoryId: "203",
@@ -220,14 +221,15 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
       fuelUnitsId: "Fuel Units ID",
       capacity: "Capacity Value",
       capacityUnitsId: "Capacity Units ID",
-      date:getDate()
+      date: getDate(),
     };
-    console.log(deviceNode);
+    console.log(employeeNode);
     axios
-      .post(`${BASE_URL}/api/nodeMaster`, deviceNode)
+      .post(`${BASE_URL}/api/nodeMaster`, employeeNode)
       .then((response) => {
         console.log(response.data);
-        sendtoConfigurations(deviceNode)
+        showNodes()
+        sendtoConfigurations(employeeNode);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -247,18 +249,18 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
     setnodeId("");
     setempId("");
     setNewRowActive(false);
-  }
+  };
 
   const handleNewRowSubmit = () => {
     const payload = {
       emp: empId,
       node: nodeId,
       branchId: auth.branchId.toString(),
-      isActive: "true",
+      isActive: true,
       userId: auth.empId.toString(),
       nodeType: "Machine",
-      default: "No",
-      primary: "Secondary",
+      default: "Yes",
+      primary: "Yes",
       date: getDate(),
     };
     console.log("new row data:", payload);
@@ -269,14 +271,14 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
         toast.success(
           <span>
             <strong>Successfully! </strong> Added
-            </span>,
-            {
-              position: toast.POSITION.BOTTOM_RIGHT,
-              className: "custom-toast",
-            }
+          </span>,
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            className: "custom-toast",
+          }
         );
         handleCreateNode(nodeId, empId);
-        EmptyFields()
+        EmptyFields();
         showEmpNodeMapping();
       })
       .catch((error) => {
@@ -300,7 +302,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
         empId.includes(searchValue.toLowerCase()) ||
         empName.includes(searchValue.toLowerCase()) ||
         nodeId.includes(searchValue.toLowerCase()) ||
-        nodeName.includes(searchValue.toLowerCase()) 
+        nodeName.includes(searchValue.toLowerCase())
       );
     });
     setFilteredResults(filteredData);
@@ -308,21 +310,23 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
 
   const [height, setHeight] = useState();
   useEffect(() => {
-    console.log(tableHeight,"heightt")
-    if(tableHeight > '1' && tableHeight < '360'){
-      setHeight(tableHeight-'100');
-    }
-    else{
-      setHeight('350px')
+    console.log(tableHeight, "heightt");
+    if (tableHeight > "1" && tableHeight < "360") {
+      setHeight(tableHeight - "100");
+    } else {
+      setHeight("350px");
     }
   }, []);
   return (
-    <div className="container-fluid" style={{
-      // height: tableHeight ? tableHeight : '200px',
-      height:  height,
-      overflowY: "scroll",
-      overflowX :"hidden"
-    }}>
+    <div
+      className="container-fluid"
+      style={{
+        // height: tableHeight ? tableHeight : '200px',
+        height: height,
+        overflowY: "scroll",
+        overflowX: "hidden",
+      }}
+    >
       <div className="row">
         <div className="col-3 d-flex flex-row justify-content-end m-1">
           <input
@@ -347,19 +351,19 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
           <table className="table table-bordered table-striped">
             <thead className="sticky-top table-head">
               <tr>
-                <th style={{width:'10%'}}>Id</th>
-                <th style={{width:'10%'}}>Employee Id</th>
-                <th style={{width:'10%'}}>Employee Name</th>
-                <th style={{width:'10%'}}>Node Id</th>
-                <th style={{width:'20%'}}>Node Description</th>
-                <th style={{width:'10%'}}>Default</th>
-                <th style={{width:'10%'}}>Primary</th>
-                <th style={{width:'10%'}}>Node Type</th>
-                <th style={{width:'10%'}}>Actions</th>
+                <th style={{ width: "10%" }}>Id</th>
+                <th style={{ width: "10%" }}>Employee Id</th>
+                <th style={{ width: "10%" }}>Employee Name</th>
+                <th style={{ width: "10%" }}>Node Id</th>
+                <th style={{ width: "20%" }}>Node Description</th>
+                <th style={{ width: "10%" }}>Default</th>
+                <th style={{ width: "10%" }}>Primary</th>
+                <th style={{ width: "10%" }}>Node Type</th>
+                <th style={{ width: "10%" }}>Actions</th>
               </tr>
             </thead>
             <tbody className=" overflowY:'auto'">
-            {isNewRowActive === true &&(
+              {isNewRowActive === true && (
                 <tr>
                   <td></td>
                   <td colSpan={2}>
@@ -405,7 +409,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td style={{textAlign:'center'}}>
+                  <td style={{ textAlign: "center" }}>
                     <button
                       style={{ border: "none", background: "transparent" }}
                       onClick={handleNewRowSubmit}
@@ -527,7 +531,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                         )}
                       </td>
                       <td>{item.nodeType}</td>
-                      <td style={{textAlign:'center'}}>
+                      <td style={{ textAlign: "center" }}>
                         {editedIndex === index ? (
                           <>
                             <button
@@ -537,7 +541,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                               }}
                               onClick={removeEdit}
                             >
-                              <FaXmark id="FaMinus"/>
+                              <FaXmark id="FaMinus" />
                             </button>
                           </>
                         ) : (
@@ -547,9 +551,9 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                                 border: "none",
                                 backgroundColor: "transparent",
                               }}
-                              onClick={handleClickdeletepopup}
+                              onClick={() => handleClickdeletepopup(item.empnodemapId)}
                             >
-                              <FaMinus id="FaMinus"/>
+                              <FaMinus id="FaMinus" />
                             </button>
                             <React.Fragment>
                               <Dialog
@@ -574,9 +578,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                                 </DialogContent>
                                 <DialogActions>
                                   <Button
-                                    onClick={() =>
-                                      handleDeleteStaffMapping(item.parameterId)
-                                    }
+                                    onClick={handleDeleteStaffMapping}
                                   >
                                     Yes
                                   </Button>
@@ -598,7 +600,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                               }}
                               onClick={(event) => handleSave()}
                             >
-                              <FaCheck id="FaCheck"/>
+                              <FaCheck id="FaCheck" />
                             </button>
                           </>
                         ) : (
@@ -609,7 +611,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                             }}
                             onClick={() => handleEdit(index)}
                           >
-                            <FaEdit id="FaEdit"/>
+                            <FaEdit id="FaEdit" />
                           </button>
                         )}
                       </td>
@@ -687,8 +689,8 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                             }}
                           >
                             <option hidden>Default</option>
-                            <option value="True">Yes</option>
-                            <option value="False">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
                           </select>
                         ) : (
                           <div>{item.primary}</div>
@@ -711,15 +713,15 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                             }}
                           >
                             <option hidden>Primary</option>
-                            <option value="True">Yes</option>
-                            <option value="False">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
                           </select>
                         ) : (
                           <div>{item.default}</div>
                         )}
                       </td>
                       <td>{item.nodeType}</td>
-                      <td style={{textAlign:'center'}}>
+                      <td style={{ textAlign: "center" }}>
                         {editedIndex === index ? (
                           <>
                             <button
@@ -729,7 +731,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                               }}
                               onClick={removeEdit}
                             >
-                              <FaXmark id="FaMinus"/>
+                              <FaXmark id="FaMinus" />
                             </button>
                           </>
                         ) : (
@@ -739,9 +741,9 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                                 border: "none",
                                 backgroundColor: "transparent",
                               }}
-                              onClick={handleClickdeletepopup}
+                              onClick={() => handleClickdeletepopup(item.empnodemapId)}
                             >
-                              <FaMinus id="FaMinus"/>
+                              <FaMinus id="FaMinus" />
                             </button>
                             <React.Fragment>
                               <Dialog
@@ -766,9 +768,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                                 </DialogContent>
                                 <DialogActions>
                                   <Button
-                                    onClick={() =>
-                                      handleDeleteStaffMapping(item.parameterId)
-                                    }
+                                    onClick={handleDeleteStaffMapping}
                                   >
                                     Yes
                                   </Button>
@@ -790,7 +790,7 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                               }}
                               onClick={(event) => handleSave()}
                             >
-                              <FaCheck id="FaCheck"/>
+                              <FaCheck id="FaCheck" />
                             </button>
                           </>
                         ) : (
@@ -801,13 +801,12 @@ function StaffAllocation({tableHeight,sendtoConfigurations}) {
                             }}
                             onClick={() => handleEdit(index)}
                           >
-                            <FaEdit id="FaEdit"/>
+                            <FaEdit id="FaEdit" />
                           </button>
                         )}
                       </td>
                     </tr>
                   ))}
-              
             </tbody>
           </table>
 

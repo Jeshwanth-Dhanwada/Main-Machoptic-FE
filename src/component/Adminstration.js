@@ -10,8 +10,8 @@ import React, {
 } from "react";
 import EdgeEditPopup from "./EdgeEditor.js";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import { Backdrop, Card, Slider } from "@mui/material";
+import { toast } from "react-toastify";
+import { Backdrop, Card } from "@mui/material";
 import { BsPlusLg } from "react-icons/bs";
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
@@ -35,7 +35,6 @@ import {
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import { NODE_WIDTH, NODE_HEIGHT } from "../constants/chartlConstants.js";
-import { ReactFlowProvider } from "react-flow-renderer";
 import iconNode from "./nodeTypes/iconNode.js";
 import graphNode from "./nodeTypes/graphNode.js";
 import MachineNode from "./nodeTypes/MachineNode.js";
@@ -50,7 +49,6 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   useReactFlow,
-  addEdge,
   MarkerType,
 } from "reactflow";
 import "./sidebar.css";
@@ -85,24 +83,14 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Slide from "@mui/material/Slide";
 import NodeTypeModal from "./nodeTypeModal.js";
 
-import Modal from "@mui/material/Modal";
-import { FaRegRectangleXmark } from "react-icons/fa6";
 
 import Paper from '@mui/material/Paper';
 import Draggable from 'react-draggable';
 import FullScreenModal from "./FullScreenModal.js";
+import { createNodeData } from "../utils/convertToNodes.js";
+import { IoInformationCircleOutline } from "react-icons/io5";
+import { IoIosInformationCircle } from "react-icons/io";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
 
 function PaperComponent(props) {
   return (
@@ -307,50 +295,12 @@ const AdministrationShowRoutes = ({
         setData(response.data);
         let filter = []
         filter = response.data
-                  .filter((item)=> (item.nodeType === 'Machine' 
-                                    || item.nodeType === 'Material'
+                  .filter((item)=> (
+                                    item.nodeType !== 'job' &&
+                                    item.nodeType !== 'employee' &&
+                                    item.nodeType !== 'device' 
                                   ))
-        let x = [];
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+        const x = createNodeData(filter)
         setNodes(x);
         setOpenLoader(false);
       })
@@ -368,51 +318,11 @@ const AdministrationShowRoutes = ({
 
         let filter = []
         filter = response.data
-                  .filter((item)=> (item.nodeType === 'Machine' 
-                                    || item.nodeType === 'Material'
+                  .filter((item)=> (item.nodeType !== 'job' &&
+                    item.nodeType !== 'employee' &&
+                    item.nodeType !== 'device' 
                                   ))
-        
-        let x = [];
-        for (let index = 0; index < filter.length; index++) {
-          const data = filter[index];
-          x.push({
-            nodeId: data.nodeId,
-            width: data.width,
-            height: data.height,
-            id: data.id,
-            data: { label: data.nodeName },
-            nodeType: data.nodeType,
-            MachineType: data.MachineType,
-            type: data.type,
-            nodeCategory: data.nodeCategory,
-            unit1Measurable: data.unit1Measurable,
-            parentNode: data.parentNode,
-            extent: data.extent,
-            unit2Mandatory: data.unit2Mandatory,
-            iconId: data.iconId,
-            itemDescription: data.itemDescription,
-            sourcePosition: data.sourcePosition,
-            targetPosition: data.targetPosition,
-            nodeImage: data.nodeImage,
-            percentage_rejects: data.percentage_rejects,
-            position: { x: data.xPosition, y: data.yPosition },
-            style: {
-              background: data.fillColor, // Set background color
-              color: data.FontColor, // Set text color
-              borderColor: data.borderColor,
-              borderStyle: data.borderStyle,
-              borderWidth: data.borderWidth,
-              fontSize: data.FontSize, // Set the font size
-              fontStyle: data.FontStyle, // Set the font style
-              width: data.width,
-              height: data.height,
-              borderRadius: data.borderRadius,
-              display: data.borderRadius ? "flex" : "",
-              alignItems: data.nodeImage == null ? "center" : "",
-              justifyContent: "center",
-            },
-          });
-        }
+        const x = createNodeData(filter)
         setNodes(x);
         setOpenLoader(false);
       })
@@ -434,112 +344,8 @@ const AdministrationShowRoutes = ({
     setNodeShowPopup(false);
   };
 
-  // const getsourcenodeId = (params) => {
-  //   const nodedata = data.filter(item => item.id === params.source);
-  //   return nodedata[0].nodeId
-  // }
-
-  // const gettargetnodeId = (params) => {
-  //   const edgedata = data.filter(item => item.id === params.target);
-  //   return edgedata[0].nodeId
-  // }
-  // //Add Edge connection logic ----------------------
-
-  // const onConnect = useCallback(
-  //   (params) => {
-  //     console.log(params,"params")
-  //     if (route && route.routeid) {
-  //       const newEdge = {
-  //         ...params,
-  //         id: uuidv4(),
-  //         edgeId: undefined,
-  //         sourceNodeId: getsourcenodeId(params),
-  //         targetNodeId: gettargetnodeId(params),
-  //         routeId: route.routeid,
-  //         type: "smoothstep",
-  //         label: "",
-  //         markerEnd: {
-  //           type: MarkerType.ArrowClosed,
-  //           width: 25,
-  //           height: 25,
-  //           color: "#000",
-  //           arrow: true,
-  //         },
-  //         style: { strokeWidth: 1, stroke: "#CECECF" },
-  //         animated: false,
-  //       };
-  //       setEdges((edges) => addEdge(newEdge, edges));
-  //     } else {
-  //       // Handle the case when route.id is not present (e.g., show an error message)
-  //       console.log("Cannot connect edges: route.id is not present.");
-  //     }
-  //   },
-  //   [route, setEdges]
-  // );
 
   // Add Node --------------------------------------
-
-  const getsourcenodeId = (params) => {
-    const nodedata = data.filter((item) => item.id === params.source);
-    return nodedata[0]?.nodeId;
-  };
-
-  const gettargetnodeId = (params) => {
-    const edgedata = data.filter((item) => item.id === params.target);
-    return edgedata[0]?.nodeId;
-  };
-
-  const getNodeType = (id) => {
-    const node = data.find((item) => item.id === id);
-    return node?.nodeType;
-  };
-
-  // Add Edge connection logic ----------------------
-  const onConnect = useCallback(
-    (params) => {
-      console.log(params, "params");
-
-      const sourceNodeType = getNodeType(params.source);
-      const targetNodeType = getNodeType(params.target);
-
-      // Check if the source is 'Machine' and the target is 'Material'
-      if (
-        (sourceNodeType === "Machine" && targetNodeType === "Material") ||
-        (sourceNodeType === "Material" && targetNodeType === "Machine")
-      ) {
-        if (route && route.routeid) {
-          const newEdge = {
-            ...params,
-            id: uuidv4(),
-            edgeId: undefined,
-            sourceNodeId: getsourcenodeId(params),
-            targetNodeId: gettargetnodeId(params),
-            routeId: route.routeid,
-            type: "smoothstep",
-            label: "",
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 25,
-              height: 25,
-              color: "#000",
-              arrow: true,
-            },
-            style: { strokeWidth: 1, stroke: "#CECECF" },
-            animated: false,
-          };
-          setEdges((edges) => addEdge(newEdge, edges));
-        } else {
-          console.log("Cannot connect edges: route.id is not present.");
-        }
-      } else {
-        // Connection not allowed if both nodes are 'Machine' or both are 'Material'
-        console.log(
-          "Connection not allowed: source and target must be Machine -> Material."
-        );
-      }
-    },
-    [route, setEdges]
-  );
 
   const [nodeType, setNodeType] = useState();
   const [triggered, setTriggered] = useState(false); // Flag to control the effect
@@ -549,213 +355,7 @@ const AdministrationShowRoutes = ({
     setNodeType(item);
   };
 
-  const CreateNewNode = () => {
-    // Check if NodeType is 'Machine' or 'Material'
-    if (nodeType === "Machine" || nodeType === "Material") {
-      const selectedNode = nodes.find((node) => node.selected);
-      if (!selectedNode && nodeType === "Machine") {
-        const newNode = {
-          id: uuidv4(),
-          nodeType: nodeType,
-          MachineType: "",
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          type: "",
-          unit2Mandatory: "",
-          iconId: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          height: "60px",
-          width: "250px",
-          position: {
-            x: 200, // Generate a random x-coordinate within a reasonable range
-            y: 0, // Generate a random y-coordinate within a reasonable range
-          },
-          data: {
-            label: `Node ${getId()}`,
-          },
-          sourcePosition: "right",
-          targetPosition: "left",
-          style: {
-            background: "#EEEEEE", // Set background color
-            color: "#000000", // Set text color
-            borderColor: "#CCCCCC",
-            borderStyle: "solid",
-            borderWidth: "1px",
-            fontSize: "14px", // Set the font size
-            fontStyle: "normal", // Set the font style
-            width: "300px",
-            height: "60px",
-            borderRadius: "10px",
-            justifycontent: "center" /* Horizontally center */,
-            alignitems: "center" /* Vertically center */,
-          },
-        };
-        setNewNode(newNode);
-        // computeNodeList.push(newNode)
-        addNodes(newNode);
-      }
-      if (!selectedNode && nodeType === "Material") {
-        const newNode = {
-          id: uuidv4(),
-          nodeType: nodeType,
-          MachineType: "",
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          type: "",
-          unit2Mandatory: "",
-          iconId: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          height: "60px",
-          width: "250px",
-          position: {
-            x: 200, // Generate a random x-coordinate within a reasonable range
-            y: 0, // Generate a random y-coordinate within a reasonable range
-          },
-          data: {
-            label: `Node ${getId()}`,
-          },
-          sourcePosition: "right",
-          targetPosition: "left",
-          style: {
-            background: "#EEEEEE", // Set background color
-            color: "#000000", // Set text color
-            borderColor: "#CCCCCC",
-            borderStyle: "solid",
-            borderWidth: "1px",
-            fontSize: "14px", // Set the font size
-            fontStyle: "normal", // Set the font style
-            width: "80px",
-            height: "80px",
-            borderRadius: "50%",
-            justifycontent: "center" /* Horizontally center */,
-            alignitems: "center" /* Vertically center */,
-          },
-        };
-        setNewNode(newNode);
-        // computeNodeList.push(newNode)
-        addNodes(newNode);
-      } else {
-        const xOffset = 400; // Initial x-offset
-        const yOffset = 0; // Initial y-offset
-        const offsetIncrement = 50; // Increase in offset for each new node
-
-        const existingNodesAtPosition = (x, y) =>
-          nodes.some((node) => node.position.x === x && node.position.y === y);
-
-        const calculatePosition = (x, y, offset) => {
-          while (existingNodesAtPosition(x, y)) {
-            x += offset;
-            y += offset;
-          }
-          return { x, y };
-        };
-
-        // console.log("something", initialNodes);
-
-        // If a node is selected, add the new node and create a connection
-        const newX = selectedNode.position.x + xOffset;
-        const newY = selectedNode.position.y + yOffset;
-
-        const { x: finalX, y: finalY } = calculatePosition(
-          newX,
-          newY,
-          offsetIncrement
-        );
-        if (nodeType === "Machine") {
-          const newNode = {
-            id: uuidv4(),
-            nodeType: nodeType,
-            MachineType: "",
-            nodeCategory: "",
-            unit1Measurable: "",
-            parentNode: "",
-            extent: "",
-            type: "",
-            unit2Mandatory: "",
-            iconId: "",
-            itemDescription: "",
-            nodeImage: "",
-            percentage_rejects: "",
-            // nodeId:NodegetId(),
-            position: { x: finalX, y: finalY },
-            sourcePosition: "right",
-            targetPosition: "left",
-            data: {
-              label: `Node ${getId()}`,
-            },
-            style: {
-              background: "#EEEEEE", // Set background color
-              color: "#000000", // Set text color
-              borderColor: "#CCCCCC",
-              borderStyle: "solid",
-              borderWidth: "1px",
-              fontSize: "14px", // Set the font size
-              fontStyle: "normal", // Set the font style
-              width: "300px",
-              height: "60px",
-              borderRadius: "10px",
-              justifycontent: "center" /* Horizontally center */,
-              alignitems: "center" /* Vertically center */,
-            },
-          };
-          setNewNode(newNode);
-          computeNodeList.push(newNode);
-          addNodes(newNode);
-          setEdges((prevEdges) => [...prevEdges]);
-        }
-        if (nodeType === "Material") {
-          const newNode = {
-            id: uuidv4(),
-            nodeType: nodeType,
-            MachineType: "",
-            nodeCategory: "",
-            unit1Measurable: "",
-            parentNode: "",
-            extent: "",
-            type: "",
-            unit2Mandatory: "",
-            iconId: "",
-            itemDescription: "",
-            nodeImage: "",
-            percentage_rejects: "",
-            // nodeId:NodegetId(),
-            position: { x: finalX, y: finalY },
-            sourcePosition: "right",
-            targetPosition: "left",
-            data: {
-              label: `Node ${getId()}`,
-            },
-            style: {
-              background: "#EEEEEE", // Set background color
-              color: "#000000", // Set text color
-              borderColor: "#CCCCCC",
-              borderStyle: "solid",
-              borderWidth: "1px",
-              fontSize: "14px", // Set the font size
-              fontStyle: "normal", // Set the font style
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              justifycontent: "center" /* Horizontally center */,
-              alignitems: "center" /* Vertically center */,
-            },
-          };
-          setNewNode(newNode);
-          computeNodeList.push(newNode);
-          addNodes(newNode);
-          setEdges((prevEdges) => [...prevEdges]);
-        }
-      }
-    }
-  };
+  
   const onAddNode = useCallback(
     (NodeType) => {
       resetTrigger();
@@ -789,6 +389,7 @@ const AdministrationShowRoutes = ({
           data: {
             label: `Node ${getId()}`,
           },
+          date:getDate(),
           sourcePosition: "right",
           targetPosition: "left",
           style: {
@@ -898,6 +499,7 @@ const AdministrationShowRoutes = ({
             data: {
               label: `Node ${getId()}`,
             },
+            date:getDate(),
             style: {
               background: "white", // Set background color
               color: "black", // Set text color
@@ -969,96 +571,6 @@ const AdministrationShowRoutes = ({
     const filteredEdges = edges.filter((edge) => !selectedEdgeIds.has(edge.id));
     setEdges(filteredEdges);
   }, [edges, setEdges]);
-
-  // const deletenodes = useCallback(() => {
-  //   // setConsecutiveAddCounter(0);
-  //   const selectedNode = nodes.find((node) => node.selected);
-  //   // const selectedEdge = edges.find((edge) => edge.selected)
-  //   if (!selectedNode ) {
-  //     // Display an alert or notification to the user
-  //     alert("Please select a Node to delete.");
-  //     return;
-  //   }
-
-  //   // Make an Axios DELETE request to delete the selected node by its ID
-  //   axios
-  //     .delete(`${BASE_URL}/api/nodeMaster/${selectedNode.nodeId}`)
-  //     .then((response) => {
-  //       console.log("Node deleted successfully", response.data);
-  //       const apiUrl = `${BASE_URL}/api/nodeMaster`;
-
-  //         axios
-  //           .get(apiUrl)
-  //           .then((response) => {
-  //             setData(response.data);
-  //             let x = [];
-  //             for (let index = 0; index < response.data.length; index++) {
-  //               const data = response.data[index];
-  //               x.push({
-  //                 nodeId: data.nodeId,
-  //                 id: data.id,
-  //                 nodeType:data.nodeType,
-  //                 nodeCategory: data.nodeCategory,
-  //                 data: { label: data.nodeName },
-  //                 sourcePosition: data.sourcePosition,
-  //                 targetPosition: data.targetPosition,
-  //                 position: { x: data.xPosition, y: data.yPosition },
-  //                 style: {
-  //                   background: data.fillColor, // Set background color
-  //                   color: "#000", // Set text color
-  //                   borderColor: data.borderColor,
-  //                   borderStyle: data.borderStyle,
-  //                   borderWidth: data.borderWidth,
-  //                   fontSize: data.FontSize, // Set the font size
-  //                   fontStyle: data.FontStyle, // Set the font style
-  //                   width: data.width,
-  //                   height: data.height,
-  //                   borderRadius: data.borderRadius,
-  //                   display: data.borderRadius ? 'flex' : '',
-  //                   alignItems: 'center',
-  //                   fontColor:data.FontColor
-  //                 },
-  //               });
-  //             }
-  //             setNodes(x);
-  //           })
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error deleting node:", error);
-  //     });
-
-  //   const selectedNodeIds = new Set();
-  //   const selectedEdgeIds = new Set();
-  //   nodes.forEach((node) => {
-  //     if (node.selected) {
-  //       selectedNodeIds.add(node.id);
-  //       // Collect descendant nodes by traversing edges
-  //       edges.forEach((edge) => {
-  //         if (edge.source === node.id) {
-  //           selectedNodeIds.add(edge.target);
-  //         }
-  //       });
-  //     }
-  //   });
-
-  //   // Collect edges connected to the selected nodes
-  //   edges.forEach((edge) => {
-  //     if (
-  //       selectedNodeIds.has(edge.source) ||
-  //       selectedNodeIds.has(edge.target)
-
-  //     ) {
-  //       selectedEdgeIds.add(edge.id);
-  //     }
-  //   });
-
-  //   const filteredNodes = nodes.filter((node) => !selectedNodeIds.has(node.id));
-  //   console.log(filteredNodes);
-  //   const filteredEdges = edges.filter((edge) => !selectedEdgeIds.has(edge.id));
-
-  //   setNodes(filteredNodes);
-  //   setEdges(filteredEdges);
-  // }, [nodes, edges]);
 
   const DeleteChildNodes = (Id,nodeId) => {
     const getId = Nodemasterdata
@@ -1344,23 +856,6 @@ const AdministrationShowRoutes = ({
     setSelectedEdgeForEdit(null);
   };
 
-  //Edit Node ------------
-
-  const handleEditNode = (node) => {
-    setSelectedNodeForEdit(node);
-    console.log("******");
-    // Set the selected property of the node to true
-    const updatedNodes = nodes.map((n) => ({
-      ...n,
-      selected: n.id === node.id,
-
-      // style: {
-      //   // backgroundColor: 'red',
-      //   border: '2px solid red',
-      // },
-    }));
-    setNodes(updatedNodes);
-  };
 
   const handleNodeSave = (editedNode) => {
     const updatedNodes = nodes.map((node) =>
@@ -1422,60 +917,16 @@ const AdministrationShowRoutes = ({
           FontStyle: node.style.fontStyle,
           FontSize: node.style.fontSize,
           userId: auth.empId.toString(),
+          borderLeftWidth: node.style.borderLeftWidth, // Set left border width to 10px
+          borderLeftColor: node.style.borderLeftColor, // Set left border color to red (you can change this to any color)
         })),
     };
     return JSON.stringify(jsonDatadummy);
   };
 
-  const FindSourceNodeType = (sourcenode) => {
-    console.log("sourcenode:", sourcenode);
-    const nodeType = nodes
-      .filter((n) => n.id == sourcenode)
-      .map((type) => type.nodeType);
-    console.log("nodeType:", nodeType[0]);
-    return nodeType[0];
-  };
-  const FindTargetNodeType = (targetnode) => {
-    const nodeType = nodes
-      .filter((n) => n.id == targetnode)
-      .map((type) => type.nodeType);
-    return nodeType[0];
-  };
-
-  const generateJSONDataForEdges = (edges) => {
-    const jsonData = {
-      edges: edges.map((edge) => ({
-        id: edge.id,
-        branchId: auth.branchId.toString(),
-        edgeId: edge.edgeId,
-        edgeDescription: "edgeDescription",
-        routeId: route.routeid.toString(),
-        sequenceId: "YourSequenceId",
-        sourceNodeType: FindSourceNodeType(edge.source),
-        targetNodeType: FindTargetNodeType(edge.target),
-        sourceId: edge.source,
-        targetId: edge.target,
-        unitsId: "unitsId",
-        materialType: "Material Type",
-        edgeStyle: edge.type,
-        edgeColor: edge.style.stroke,
-        edgeThickness: edge.style.strokeWidth,
-        animation: false,
-        arrow: false,
-        label: edge.label,
-        userId: auth.empId.toString(),
-        sourceNodeId: edge.sourceNodeId,
-        targetNodeId: edge.targetNodeId,
-      })),
-    };
-    return JSON.stringify(jsonData); // Use null and 2 for pretty formatting
-  };
 
   const handleSaveNode = () => {
-    // Generate JSON data for nodes
     const nodesData = generateJSONDataForNodes(nodes);
-    // Send the parsedNodesData to the database via an API
-
     axios
       .put(`${BASE_URL}/api/nodeMaster/bulk/`, nodesData, {
         headers: {
@@ -1491,50 +942,11 @@ const AdministrationShowRoutes = ({
               setData(response.data);
               let filter = []
               filter = response.data
-                        .filter((item)=> (item.nodeType === 'Machine' 
-                                          || item.nodeType === 'Material'
+                        .filter((item)=> (item.nodeType !== 'job' &&
+                          item.nodeType !== 'employee' &&
+                          item.nodeType !== 'device' 
                                         ))
-              let x = [];
-              for (let index = 0; index < filter.length; index++) {
-                const data = filter[index];
-                x.push({
-                  nodeId: data.nodeId,
-                  id: data.id,
-                  nodeType: data.nodeType,
-                  MachineType: data.MachineType,
-                  nodeCategory: data.nodeCategory,
-                  unit1Measurable: data.unit1Measurable,
-                  unit2Mandatory: data.unit2Mandatory,
-                  iconId: data.iconId,
-                  itemDescription: data.itemDescription,
-                  nodeImage: data.nodeImage,
-                  percentage_rejects: data.percentage_rejects,
-                  type: data.type,
-                  parentNode: data?.parentNode,
-                  extent: data.extent,
-                  data: { label: data.nodeName },
-                  sourcePosition: data.sourcePosition,
-                  targetPosition: data.targetPosition,
-                  width: data.width,
-                  height: data.height,
-                  position: { x: data.xPosition, y: data.yPosition },
-                  style: {
-                    background: data.fillColor, // Set background color
-                    color: data.FontColor, // Set text color
-                    borderColor: data.borderColor,
-                    borderStyle: data.borderStyle,
-                    borderWidth: data.borderWidth,
-                    fontSize: data.FontSize, // Set the font size
-                    fontStyle: data.FontStyle, // Set the font style
-                    width: data.width,
-                    height: data.height,
-                    borderRadius: data.borderRadius,
-                    display: data.borderRadius ? "flex" : "",
-                    alignItems: data.nodeImage == null ? "center" : "",
-                    justifyContent: "center",
-                  },
-                });
-              }
+              const x = createNodeData(filter)
               setNodes(x);
             })
             .catch((error) => {
@@ -1548,87 +960,6 @@ const AdministrationShowRoutes = ({
       });
   };
 
-  const handleEdge = () => {
-    const EdgesData = generateJSONDataForEdges(edges);
-    // Send the parsedNodesData to the database via an API
-    axios
-      .put(`${BASE_URL}/api/edgeMaster/bulk`, EdgesData, {
-        headers: {
-          "Content-Type": "application/json", // Set the content type to JSON
-        },
-      })
-      .then((response) => {
-        // if(response.status === 201){
-        // const apiUrl = `${BASE_URL}/api/edgeMaster}`;
-        // axios.get(apiUrl)
-        //   .then((response) => {
-        //     const dataArray = response.data.map((data) => ({
-        //       id: data.id,
-        //       edgeId: data.edgeId,
-        //       routeid:data.routeId,
-        //       source: data.sourceId,
-        //       target: data.targetId,
-        //       type: data.edgeStyle,
-        //       animated: data.animation,
-        //       sourceNodeId:data.sourceNodeId,
-        //       targetNodeId:data.targetNodeId,
-        //       label: data.label,
-        //       style: { strokeWidth: data.edgeThickness, stroke: data.edgeColor },
-        //       markerEnd: {
-        //         type: MarkerType.ArrowClosed,
-        //         width: 15,
-        //         height: 15,
-        //         color: "#000",
-        //         arrow: data.arrow,
-        //       },
-        //     }));
-        //     setEdges(dataArray)
-        //     console.log(dataArray)
-        //     console.log("Incoming")
-        //   })
-        //     .catch((error) => {
-        //       console.error("Error fetching data:", error);
-        //     });
-        //   }
-      })
-      .catch((error) => {
-        console.error("Error saving data:", error);
-      });
-  };
-
-  function RetriveEmployeeNodeMapping() {
-    const apiUrl = `${BASE_URL}/api/employeeNodeMapping`;
-    axios
-      .get(apiUrl)
-      .then((response) => {
-        // console.log(response.data);
-        setempAllocation(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
-  }
-  function RetriveDeviceMapping() {
-    const apiUrl = `${BASE_URL}/api/deviceMapping`;
-    axios
-      .get(apiUrl)
-      .then((response) => {
-        console.log(response.data);
-        setDeviceAllocation(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
-  }
-
-  function getFormattedToday() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`; // Correct format: YYYY-MM-DD
-  }
-
   // find current date
   const getDate = () => {
     const today = new Date();
@@ -1638,62 +969,6 @@ const AdministrationShowRoutes = ({
     )}-${String(today.getDate()).padStart(2, "0")}`;
   };
 
-  const handleEmployeeSubmit = () => {
-    if (StaffAllocation.length > 0) {
-      const drop = {
-        employeeNodeMapping: StaffAllocation.map((item, index) => ({
-          empnodemapId: item.empnodemapId,
-          emp: item.empId,
-          branchId: auth.branchId,
-          node: item.nodedetails.nodeId,
-          nodeType: item.nodeType,
-          isActive: true,
-          userId: auth.empId.toString(),
-          default: "No",
-          primary: "Secondary",
-          // date: getFormattedToday().split(' ').toString()
-          date: getDate(),
-        })),
-      };
-      console.log(drop);
-
-      axios
-        .put(`${BASE_URL}/api/employeeNodeMapping/bulk`, drop)
-        .then((response) => {
-          setStaffAllocation([]);
-          RetriveEmployeeNodeMapping();
-          console.log("New row added successfully", response.data);
-        })
-        .catch((error) => {
-          console.error("Error adding new row:", error);
-        });
-    }
-  };
-
-  const handleDeviceSubmit = () => {
-    // console.log(DeviceMapping);
-    if (DeviceMapping.length > 0) {
-      const drop = {
-        deviceMapping: DeviceMapping.map((item, index) => ({
-          deviceId: item.deviceId.toString(),
-          branchId: auth.branchId.toString(),
-          nodeId: item.nodedetails.nodeId.toString(),
-          userId: auth.empId.toString(),
-        })),
-      };
-      axios
-        .put(`${BASE_URL}/api/deviceMapping/bulk`, drop)
-        .then((response) => {
-          console.log("New row added successfully", response.data);
-          setDeviceMapping([]);
-          setDeviceAllocation(response.data);
-          // RetriveDeviceMapping()
-        })
-        .catch((error) => {
-          console.error("Error adding new row:", error);
-        });
-    }
-  };
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -1706,112 +981,11 @@ const AdministrationShowRoutes = ({
     return () => clearInterval(interval);
   }, []);
 
-  const hours = currentTime.getHours();
-  const minutes = currentTime.getMinutes();
-  const seconds = currentTime.getSeconds();
-
-  const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  // const formattedTime = '20:01:00'
-
-  const shiftST = shiftdata.map((item) => item.startTime);
-  const shiftET = shiftdata.map((item) => item.endTime);
-
-  function getShiftTime() {
-    if (formattedTime >= shiftST[0] && shiftET[0] >= formattedTime) {
-      const firstShift = shiftdata.map((item) => item.shiftNumber);
-      return firstShift[0];
-    } else {
-      const SecondShift = shiftdata.map((item) => item.shiftNumber);
-      return SecondShift[1];
-    }
-  }
-
-  const handleNodeAllocationMapping = () => {
-    const drop = {
-      nodeAllocation: NodeMapping.map((item, index) => ({
-        empId: item.empId,
-        nodeId: item.nodedetails.nodeId.toString(),
-        branchId: auth.branchId.toString(),
-        shiftNumber: getShiftTime(),
-        date: getFormattedToday(indianFormattedDate),
-        userId: auth.empId.toString(),
-      })),
-    };
-    console.log(drop);
-    axios
-      .put(`${BASE_URL}/api/nodeAllocation/bulk`, drop)
-      .then((response) => {
-        console.log("New row added successfully", response.data);
-        setNodeMapping([]);
-      })
-      .catch((error) => {
-        console.error("Error adding new row:", error);
-        setNodeMapping([]);
-      });
-  };
-
-  const today = new Date();
-
-  // Define options for date formatting
-  const options = {
-    day: "numeric",
-    month: "numeric",
-    year: "numeric",
-    timeZone: "Asia/Kolkata", // Set the timezone to Indian Standard Time (IST)
-  };
-
-  // Format the date using toLocaleDateString
-  const indianFormattedDate = today.toLocaleDateString("en-IN", options);
-  function getFormattedToday() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`; // Correct format: YYYY-MM-DD
-  }
-
-  const handleJobAssignSubmit = () => {
-    if (JobMapping.length > 0) {
-      const drop = {
-        jobAssign: JobMapping.map((item, index) => ({
-          branchId: auth.branchId.toString(),
-          date: getFormattedToday(indianFormattedDate),
-          routeId: "1",
-          userId: auth.empId.toString(),
-          shift: getShiftTime(),
-          jobId: item.iconId,
-          node: item.nodedetails.nodeId.toString(),
-          totalProducedQty: "",
-          outstandingQty: "",
-          targetQty: "",
-          status: "Assigned",
-        })),
-      };
-      console.log(drop);
-      axios
-        .put(`${BASE_URL}/api/jobassign/bulk`, drop)
-        .then((response) => {
-          console.log("New row added successfully", response.data);
-          RetriveDeviceMapping();
-          setJobMapping([]);
-        })
-        .catch((error) => {
-          console.error("Error adding new row:", error);
-        });
-    }
-  };
 
   const handleEdgesandNodes = (event) => {
     event.preventDefault();
     Promise.all([
-      handleEdge(),
       handleSaveNode(),
-      handleEmployeeSubmit(),
-      handleDeviceSubmit(),
-      handleJobAssignSubmit(),
-      handleNodeAllocationMapping(),
     ]).then(() => {
       toast.success(
         <span>
@@ -1855,12 +1029,6 @@ const AdministrationShowRoutes = ({
   const onNodeContextMenu = (event, node) => {
     event.preventDefault(); // Prevent the default context menu
     setFullNodeData(node)
-    // setSelectedNodes(node);
-    // setNodeShowPopup(true);
-    // setShowPopup(false);
-    // setShowRoutePopup(true);
-    // setSelectedNodeId(node.id);
-    // setselectedNodeIdtoNodeGrpah(node)
     setFullNodeDetails(true)
   };
 
@@ -1882,21 +1050,6 @@ const AdministrationShowRoutes = ({
     [selectedNodeId, setNodeShowPopup, setSelectedNodes, setShowPopup]
   );
 
-  // const handleWheel = useCallback((event) => {
-  //   console.log("Incoming 2704")
-  //   // Check if shift key is pressed to allow zooming
-  //     event.preventDefault();
-  //     const zoomSpeed = 0.1;
-  //     const { deltaX, deltaY } = event;
-
-  //     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-  //       // Horizontal scroll
-  //       flowRef.current.zoom(flowRef.current.getZoom() + (deltaX > 0 ? zoomSpeed : -zoomSpeed));
-  //     } else {
-  //       // Vertical scroll - prevent zooming
-  //       flowRef.current.zoom(flowRef.current.getZoom());
-  //     }
-  // },[])
   const getNodeStyle = useCallback(
     (node) => {
       // Dynamically update the node's style based on whether it's selected
@@ -1904,8 +1057,10 @@ const AdministrationShowRoutes = ({
       senddatatoNodes(selectedNodeId);
       return {
         ...node.style,
-        borderWidth: isSelected ? "2px" : node?.style?.borderWidth,
-        borderColor: isSelected ? "" : node?.style?.borderColor,
+        // borderWidth: isSelected ? "2px" : node?.style?.borderWidth,
+        // borderColor: isSelected ? "" : node?.style?.borderColor,
+        borderLeftWidth: isSelected ? node?.style?.borderLeftWidth : node?.style?.borderLeftWidth, // Set left border width to 10px
+        borderLeftColor: isSelected ? node?.style?.borderLeftColor : node?.style?.borderLeftColor, // Set left border color to red (you can change this to any color)
       };
     },
     [selectedNodeId, senddatatoNodes]
@@ -1941,10 +1096,6 @@ const AdministrationShowRoutes = ({
   // Route popup ----------
   const [showRoutePopup, setShowRoutePopup] = useState(true);
 
-  const handleRouteClick = () => {
-    // setShowRoutePopup(true);
-  };
-
   const onCloseRoute = () => {
     setShowRoutePopup(true);
     setNodeShowPopup(false);
@@ -1958,14 +1109,6 @@ const AdministrationShowRoutes = ({
 
   const [showEdges, setShowEdges] = useState(route); // State to control edges visibility
 
-  // Function to toggle edges visibility
-  const toggleEdgesVisibility = () => {
-    setShowEdges(!showEdges);
-    // setRadioChecked(!radioChecked);
-  };
-  // const toggleEMployeeMapping = () => {
-  //   setShowEdges(!showEdges)
-  // }
 
   // Fetching Employee the data from the database
 
@@ -1987,15 +1130,6 @@ const AdministrationShowRoutes = ({
 
   const reactFlowWrapper = useRef(null);
   const [PopupEmp, setEmpPopup] = useState(false);
-  // const dragDropped = (event) => {
-  //   event.preventDefault(); // Allows the drop
-  //   let dataTransferedData = event.dataTransfer.getData('empId'); // Use the same data type as set in dragStarted
-  //   let dataTransfered = event.dataTransfer.getData('empName'); // Use the same data type as set in dragStarted
-  //   setDroppedData({ empId: dataTransferedData, empName: dataTransfered })
-  //   // Show the popup after setting the dropped data
-  //   // setEmpPopup(true)
-
-  // }
   const [shift, setShift] = useState(""); // State for the selected Shift
   const [startDate, setStartDate] = useState(""); // State for the Start Date
 
@@ -2040,25 +1174,6 @@ const AdministrationShowRoutes = ({
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-  // useEffect  = (() => {
-  //   switch (bottomtosidepanel){
-  //     case "Edges":
-  //       setValue(0); // Staff Mapping tab
-  //       break;
-  //     case "Staff Mapping":
-  //       setValue(1); // Device Mapping tab
-  //       break;
-  //     case "Raw Material":
-  //       setValue(2); // Device Mapping tab
-  //       break;
-  //     case "Device Mapping":
-  //       setValue(3); // Device Mapping tab
-  //       break;
-  //     default:
-  //     setValue(0); // Default to Nodes tab
-  //   }
-  // }, [bottomtosidepanel]);
 
   useEffect(() => {
     switch (bottomtosidepanel) {
@@ -2230,50 +1345,11 @@ const AdministrationShowRoutes = ({
             setData(response.data);
             let filter = []
               filter = response.data
-                        .filter((item)=> (item.nodeType === 'Machine' 
-                                          || item.nodeType === 'Material'
+                        .filter((item)=> (item.nodeType !== 'job' &&
+                          item.nodeType !== 'employee' &&
+                          item.nodeType !== 'device' 
                                         ))
-            let x = [];
-            for (let index = 0; index < filter.length; index++) {
-              const data = filter[index];
-              x.push({
-                nodeId: data.nodeId,
-                id: data.id,
-                nodeType: data.nodeType,
-                MachineType: data.MachineType,
-                nodeCategory: data.nodeCategory,
-                unit1Measurable: data.unit1Measurable,
-                unit2Mandatory: data.unit2Mandatory,
-                iconId: data.iconId,
-                itemDescription: data.itemDescription,
-                nodeImage: data.nodeImage,
-                percentage_rejects: data.percentage_rejects,
-                type: data.type,
-                parentNode: data?.parentNode,
-                extent: data.extent,
-                data: { label: data.nodeName },
-                sourcePosition: data.sourcePosition,
-                targetPosition: data.targetPosition,
-                width: data.width,
-                height: data.height,
-                position: { x: data.xPosition, y: data.yPosition },
-                style: {
-                  background: data.fillColor, // Set background color
-                  color: data.FontColor, // Set text color
-                  borderColor: data.borderColor,
-                  borderStyle: data.borderStyle,
-                  borderWidth: data.borderWidth,
-                  fontSize: data.FontSize, // Set the font size
-                  fontStyle: data.FontStyle, // Set the font style
-                  width: data.width,
-                  height: data.height,
-                  borderRadius: data.borderRadius,
-                  display: data.borderRadius ? "flex" : "",
-                  alignItems: data.nodeImage === null ? "center" : "",
-                  fontColor: data.FontColor,
-                },
-              });
-            }
+            const x = createNodeData(filter)
             setNodes(x);
             console.log("nodes from API:", x);
           })
@@ -2374,10 +1450,6 @@ const AdministrationShowRoutes = ({
     [deviceAllocation, empAllocation, jobAssignmentdata, nodeAllocation]
   );
 
-  function getJobNameById(jobId) {
-    const job = Oadetails.find((item) => item.jobId === jobId);
-    return job ? job.IT_NAME : "Node Not Found";
-  }
 
   const DeleteDeviceAllocation = (deviceid) => {
     axios
@@ -3030,200 +2102,6 @@ const AdministrationShowRoutes = ({
     });
   };
 
-  // useEffect(() => {
-
-  // },[])
-
-  useEffect(() => {
-    if (selectedMenuItem === "Priority Job") {
-      // Filter batchdata for all material nodes
-      const filteredNodes = batchdata.filter((node) => node.MaterialId);
-      // Get unique nodeIds
-      const uniqueNodeIds = [
-        ...new Set(filteredNodes.map((node) => node.MaterialId)),
-      ];
-      const correspondingIds = [];
-
-      setNodes((existingNodes) => {
-        const filteredNodes = existingNodes.filter(
-          (node) => node.nodeType !== "GraphNode"
-        );
-        return filteredNodes;
-      });
-
-      uniqueNodeIds.forEach((nodeId) => {
-        const node = Nodemasterdata.find(
-          (item) =>
-            String(item.nodeId) === String(nodeId) &&
-            item.nodeCategory !== "Waste"
-        );
-        if (node) {
-          correspondingIds.push(node);
-        }
-      });
-      const empNodeData = correspondingIds.map((node) => {
-        const producedQty = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.producedQty1);
-        let a = 0;
-        producedQty.forEach((item) => {
-          a += parseInt(item);
-        });
-        const target = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.targetQty);
-        let b = 0;
-        target.forEach((item) => {
-          b += parseInt(item);
-        });
-
-        const outstanding = batchMasterdata
-          .filter((item) => String(item.nodeId) === String(node.nodeId))
-          .map((item) => item.outstandingQty);
-        let c = 0;
-        outstanding.forEach((item) => {
-          c += parseInt(item);
-        });
-        console.log(outstanding, "CheckJobPriority");
-        const empNodeMap = {
-          parenId: "",
-          id: uuidv4(),
-          position: {
-            x: node.xPosition + 5,
-            y: node.yPosition - 350,
-          },
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          unit2Mandatory: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          nodeType: "GraphNode",
-          MachineType: "",
-          type: "graphNode",
-          sourcePosition: "right",
-          targetPosition: "left",
-          iconId: node.nodeId,
-          style: {
-            zIndex: 1001,
-            width: "100",
-            height: "100",
-            background: "",
-            color: "",
-            borderColor: "",
-            borderStyle: "",
-            borderWidth: "",
-            fontSize: "",
-            fontStyle: "",
-            borderRadius: "",
-            display: "",
-            alignItems: "",
-            fontColor: "",
-          },
-          data: {
-            label: "",
-            node: node.nodeId,
-            allnodes: correspondingIds,
-            producedQty: a,
-            targetQty: b,
-            outQty: c,
-          },
-        };
-        return empNodeMap;
-      });
-
-      setNodes((es) => es.concat(empNodeData));
-      setdataToBottomJobPriorPanel(empNodeData);
-    }
-    if (selectedMenuItem === "Priority Job") {
-      console.log(selectedMenuItem, "today");
-      const getnodeIds = jobAssignmentdata.map((item) => item.node.nodeId);
-      const PlannedJobs = jobAssignmentdata
-        .filter((item) => item.status === "Assigned")
-        .map((item) => item);
-      const completedJobs = Activitydata.map((item) => item);
-      const combinedJobs = completedJobs.concat(PlannedJobs);
-
-      const uniqueNodeIds = [...new Set(getnodeIds.map((node) => node))];
-
-      const correspondingIds = [];
-
-      // Filter Nodemasterdata for unique nodeIds and get corresponding IDs
-      uniqueNodeIds.forEach((nodeId) => {
-        const node = Nodemasterdata.find((item) => item.nodeId === nodeId);
-        if (node) {
-          correspondingIds.push(node);
-        }
-      });
-      // Filter out graph type nodes from the nodes state
-      setNodes((existingNodes) => {
-        // Filter out any graph-type nodes
-        const filteredNodes = existingNodes.filter(
-          (node) => node.nodeType !== "MachineNode"
-        );
-        // Concatenate the new MachineNode with the filtered nodes
-        return filteredNodes;
-      });
-      correspondingIds.map((node) => {
-        const MachineNode = {
-          parenId: "",
-          id: uuidv4(),
-          position: {
-            x: node.xPosition + 0,
-            y: node.yPosition - 130,
-          },
-          nodeCategory: "",
-          unit1Measurable: "",
-          parentNode: "",
-          extent: "",
-          unit2Mandatory: "",
-          itemDescription: "",
-          nodeImage: "",
-          percentage_rejects: "",
-          nodeType: "MachineNode",
-          MachineType: "",
-          type: "MachineNode",
-          sourcePosition: "right",
-          targetPosition: "left",
-          iconId: "",
-          style: {
-            zIndex: 1001,
-            width: "100",
-            height: "100",
-            background: "",
-            color: "",
-            borderColor: "",
-            borderStyle: "",
-            borderWidth: "",
-            fontSize: "",
-            fontStyle: "",
-            borderRadius: "",
-            display: "",
-            alignItems: "",
-            fontColor: "",
-          },
-          data: {
-            data: combinedJobs,
-            nodeId: node.nodeId,
-            onIconDoubbleClick: onIconDoubbleClick,
-          },
-        };
-        setNodes((es) => es.concat(MachineNode));
-      });
-    }
-    // else{}
-  }, [
-    Nodemasterdata,
-    batchdata,
-    selectedMenuItem,
-    Activitydata,
-    Nodemasterdata,
-    jobAssignmentdata,
-  ]);
-  // }, [batchdata,Nodemasterdata]);
-
   const HandleMaterialGraph = (jobId) => {
     console.log(jobId, "multipleJobs");
     if (jobId.length > 0) {
@@ -3453,12 +2331,6 @@ const AdministrationShowRoutes = ({
     HandleCreateNodeMultipleNodes(multipleJobs);
   };
 
-  const EmptyEdges = () => {
-    if (edges.length > 0) {
-      setEdges([]);
-    }
-  };
-
   const HandleshowEdgesbasedonJob = (jobId) => {
     const getIT_Code = Oadetails.filter((item) => item.jobId === jobId).map(
       (item) => item.IT_CODE
@@ -3492,46 +2364,16 @@ const AdministrationShowRoutes = ({
       },
     }));
     setEdges(dataArray);
-    // if(getEdges){
-    //   setEdges(getEdges)
-    // }
   };
 
-  // console.log(sendtoRoutess,"sendtoRoutess")
-  // console.log(sendtoRoutes,"sendtoRoutess")
-  // useEffect(() => {
-  //   if (sendtoRoutes) {
-  //     setNodes([...nodes, sendtoRoutes]);
-  //     // console.log(nodes)
-  //     // console.log(sendtoRoutes)
-  //   }
-  // }, [nodes,sendtoRoutes]);
 
   useEffect(() => {
     if (sendtoRoutes) {
-      //   console.log("Incoming")
-      // setNodes([...nodes, sendtoRoutes]);
       setNodes((nds) => nds.concat(sendtoRoutes));
-      //   console.log(nodes)
     }
   }, [sendtoRoutes]);
 
-  // useEffect(() => {
-  //   if (sendtoRoutes) {
-  //     const { x, y } = sendtoRoutes;
-  //     // Check if x and y are defined
-  //     if (x !=== undefined && y !=== undefined) {
-  //       // Add sendtoRoutes to nodes if x and y are defined
-  //       setNodes((nds) => nds.concat(sendtoRoutes));
-  //     }
-  //   }
-  // }, [sendtoRoutes, setNodes]); // Only run the effect when sendtoRoutes changes
-  // Define your second export function
-
-  // const handleLinkClickName = (item) => {
-  //   setActive(item);
-  //   // handleLinkClick(item)
-  // }
+  
   const [isExpandedFull, setIsExpandedFull] = React.useState(false);
   const [size, setSize] = useState();
   const HandleIcon = (item) => {
@@ -3543,33 +2385,63 @@ const AdministrationShowRoutes = ({
     height: window.outerHeight,
   };
 
-  const [hoveredNodeId, setHoveredNodeId] = useState(null);
-  const [nodePosition, setNodePosition] = useState({ x: 0, y: 0 });
-  const [hoveredNodeIdPositionx, setHoveredNodeIdPositionx] = useState(null);
-  const [hoveredNodeIdPositiony, setHoveredNodeIdPositiony] = useState(null);
+  const getActivityMessage = (color) => {
+    const a =   color === "#FFA726" ? "Machine is up for Maintenance!" : color === "#ED2226" ? "Machine is Broken!" :
+                color === "#ED2226" ? "Machine is OFF!" : color === "#29B6F6" ? "Machine is on Holiday!" : color === "#08A64F" ? "Machine is ON!" : ""
+    return a
+}
 
   const onNodeMouseEnter = (event, node) => {
-    console.log(node.position.x, node.position.y, "2704");
-    if (node && node && node.position) {
-      setHoveredNodeId(node.id);
-      setNodePosition({ x: node.position.x, y: node.position.y });
-    } else {
-      console.error("Invalid node data:", node);
-    }
-    setHoveredNodeIdPositionx(node.position.x);
-    setHoveredNodeIdPositiony(node.position.y);
+    if(node.nodeType === "Machine"){
+    const childNode = {
+      id: `child-${node.id}`,
+      type: "input", // You can use a different type if needed
+      position: {
+        x: 0, // Same x position as parent
+        y: 110, // Adjust this to place the child below the parent
+      },
+      sourcePosition: "right",
+      targetPosition: "left",
+      parentNode:node.id,
+      extent:'parent',
+      // data: { label: 'Machine is ON!' },
+      data: { label: <div className=" flex flex-col justify-center items-center font-sans font-large ">
+        <IoIosInformationCircle/> &nbsp;
+        <span>{getActivityMessage(node.style.borderLeftColor)}</span>
+      </div> },
+      style:{
+        borderRightWidth: node.style.borderWidth,
+        borderTopWidth: node.style.borderWidth,
+        borderBottomWidth: node.style.borderWidth,
+        borderRightColor: node.style.borderColor,
+        borderTopColor: node.style.borderColor,
+        borderBottomColor: node.style.borderColor,
+        borderLeftWidth: node.nodeType  === 'Machine' ?  node.style.borderLeftWidth : '', // Set left border Color to 10px
+        borderLeftColor: node.nodeType  === 'Machine' ? node.style.borderLeftColor : '#FFFFFF', 
+        borderRadius:'10px',
+        background: "white", // Set background color
+        color: "#8A8A8A", // Set text color
+        fontSize: "14px", // Set the font size
+        fontStyle: "normal", // Set the font style
+        width: "150px",
+        height: "35px",
+        justifycontent: "center" /* Horizontally center */,
+        alignitems: "center" /* Vertically center */,
+        boxShadow:'0px 2px 5px #888',
+      }
+    };
+
+    // Add the child node to the dynamic nodes
+    setNodes((prevNodes) => [...prevNodes, childNode]);
+  }
   };
-  // console.log(nodePosition,"2704")
-  const onNodeMouseLeave = () => {
-    setHoveredNodeId(null);
+  const onNodeMouseLeave = (event, node) => {
+    // Remove the child node when mouse leaves
+    setNodes((prevNodes) => prevNodes.filter((n) => n.id !== `child-${node.id}`));
   };
 
   const flowRef = useRef(null);
-  // console.log(value,"check")
 
-  const handleClickOpen = () => {
-    setConfirmUserToReplace(true);
-  };
 
   const handleClose = () => {
     setConfirmUserToReplace(false);
@@ -3601,7 +2473,6 @@ const AdministrationShowRoutes = ({
 
   window.addEventListener("error", observerErrorHandler);
 
-
   return (
     <div style={{ display: "flex" }} ref={inputRef}>
       <div
@@ -3611,28 +2482,22 @@ const AdministrationShowRoutes = ({
           zIndex: 1,
         }}
       >
-        <ReactFlowProvider>
+        {/* <ReactFlowProvider> */}
           <div
             style={{ height: 565, width: "100%", overflow: "hidden" }}
             ref={reactFlowWrapper}
             // onWheel={handleWheel}
           >
             <ReactFlow
-              // panOnDrag={true}
-              // panOnScroll={true}
-              // panOnScrollSpeed={10}
               onLoad={(reactFlowInstance) =>
                 (flowRef.current = reactFlowInstance)
               }
-              // zoomOnScroll={false}
-              // zoomOnDoubleClick={false}
-              // zoomOnPinch={false}
-              // panOnScrollMode={"horizontal"}
               ref={flowRef}
               nodesDraggable={selectedMenuItem === "Configuration" || selectedMenuItem === "Administration"} // Disable dragging for nodes
               nodes={nodes.map((node) => ({
                 ...node,
                 style: getNodeStyle(node), // Apply the updated style
+                draggable: node.nodeType !== "MachineIcon", // Allow dragging for nodes that are not "Machine"
               }))}
               edges={edges.map((edge) => ({
                 ...edge,
@@ -3646,12 +2511,10 @@ const AdministrationShowRoutes = ({
               onEdgeContextMenu={onEdgeContextMenu}
               onNodeContextMenu={onNodeContextMenu}
               onNodesChange={onNodesChange}
-              // onNodeMouseEnter={onNodeMouseEnter}
-              // onNodeMouseLeave={onNodeMouseLeave}
+              onNodeMouseEnter={onNodeMouseEnter}
+              onNodeMouseLeave={onNodeMouseLeave}
               onEdgesChange={onEdgesChange}
               onInit={setReactFlowInstance}
-              // snapToGrid={true}
-              onConnect={onConnect}
               onDrop={onDrop}
               onDragOver={onDragOver}
               fitView
@@ -4065,53 +2928,6 @@ const AdministrationShowRoutes = ({
                   </div>
                 </div>
               )}
-
-              {/* {selectedMenuItem === "Operations"  &&
-                <RightTabPanel 
-                  nodefromshowRoutes={selectedNodeId} 
-                  setJobIdSidetoBottom={HandleJobfromOperations} />
-              } */}
-              {/* {selectedMenuItem === "Planning" && selectedMenuItem !== "Operations" &&
-                <RightOperationTabPanel
-                  sendtoPlanningtab={HandlesendtoPlanningtab}
-                  toRightOperationTabPanel={toRightOperationTabPanel}
-                />
-              } */}
-              {/* {selectedMenuItem === "Priority Job" && selectedMenuItem !== "Operations" &&
-                <Priorityjobspanel
-                  onClick={HandleJobIdtoJobPriority}
-                  onDoubleClick={HandleMultipleJobs}
-                />
-              } */}
-              {/* <Panel position="top-left">
-              <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "fixed",
-                    top: 60,
-                    // backgroundColor:'#1D9C9C',
-                  }}
-                >
-              <Typography
-                  variant="h5"
-                  noWrap
-                  component="a"
-                  // href="#app-bar-with-responsive-menu"
-                  sx={{
-                    mr: 2,
-                    flexGrow: 1,
-                    fontWeight: 700,
-                    letterSpacing: '.1rem',
-                    color: '#034661',
-                    textDecoration: 'none',
-                    // width:'200px'
-                  }}
-                >
-                      {selectedMenuItem}
-                </Typography>
-              </div>
-              </Panel> */}
               <Panel position="top-left">
                 <div
                   style={{
@@ -4181,47 +2997,6 @@ const AdministrationShowRoutes = ({
                   </OverlayTrigger>
                 </div>
                 <div>
-                  <div style={{ position: "absolute", top: 123, right: 0 }}>
-                    {nodes.map((node) => (
-                      <div key={node.id} className="node">
-                        {node.selected && (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginBottom: "5px",
-                              marginRight: "-5px",
-                            }}
-                          >
-                            {/* <OverlayTrigger
-                            delay={{ hide: 450, show: 300 }}
-                            overlay={(props) => (
-                              <Tooltip {...props}>Update Node</Tooltip>
-                            )}
-                            placement="left"
-                          >
-                            <Button
-                              className="edit-button mt-2"
-                              variant="primary"
-                              // size="sm"
-                              style={{ width: "50px",background:'#09587c' }}
-                              onClick={() => handleEditNode(node)}
-                            >
-                              <FaEdit/>
-                            </Button>
-                          </OverlayTrigger> */}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ position: "absolute", top: 165, right: 0 }}>
-                    {/* {edges.map((edge) => (
-                      <div key={edge.id} className="edge">
-                       
-                      </div>
-                    ))} */}
-                  </div>
                   <div style={{ position: "absolute", top: -22, right: -10 }}>
                     {selectedNodeForEdit && (
                       <NodeEditor
@@ -4232,7 +3007,6 @@ const AdministrationShowRoutes = ({
                     )}
                     {selectedEdgeForEdit && (
                       <EdgeEditPopup
-                        // edge = {selectedEdgeForEdit}
                         onCancel={handleEdgeCancel}
                         onSave={handleEdgeSave}
                       />
@@ -4240,35 +3014,9 @@ const AdministrationShowRoutes = ({
                   </div>
                 </div>
               </Panel>
-              <Panel>
-                {/* {showGraph && (
-                    <div
-                    style={{position:'absolute',
-                    top:'-250px',
-                    left:'485px'}}
-                    >
-                    <JobPriorityGraphs jobIdtopriority={jobIdtopriority}/>
-                    </div>
-                  )} */}
-              </Panel>
               {/* <Background variant="lines" /> */}
             </ReactFlow>
-            {hoveredNodeId && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: nodePosition.y + 100,
-                  left: nodePosition.x,
-                  background: "white",
-                  padding: "5px",
-                  border: "1px solid #ccc",
-                }}
-              >
-                {/* Render data related to hovered node */}
-                {/* Example: <p>{getDataForNodeId(hoveredNodeId)}</p> */}
-                <p>{`Data for node ${hoveredNodeId}`}</p>
-              </div>
-            )}
+            
             {selectedNodes && showNodePopup && (
               <BasicTabs
                 node={selectedNodes}
@@ -4374,9 +3122,8 @@ const AdministrationShowRoutes = ({
               </DialogActions>
             </Dialog>
           </div>
-        </ReactFlowProvider>
+        {/* </ReactFlowProvider> */}
       </div>
-      <ToastContainer />
       {showAlert && (
         <ConfirmModal
           nodeData={showAlert}
@@ -4399,34 +3146,7 @@ const AdministrationShowRoutes = ({
           sendNodeType={HandleNodeType}
         />
       )}
-      {open && (
-      //   <Modal
-      //   open={open}
-      //   onClose={handleCloseDeletPopup}
-      //   aria-labelledby="modal-modal-title"
-      //   aria-describedby="modal-modal-description"
-      // >
-      //   <Box sx={style}>
-      //     <FaRegRectangleXmark 
-      //               onClick={handleCloseDeletPopup}
-      //               style={{
-      //                         fontSize:'20px',
-      //                         color:'red',
-      //                         position:'absolute',
-      //                         right:1,
-      //                         top:0,
-      //                         cursor:'pointer'
-      //                         }}/>
-      //     <Typography id="modal-modal-title" variant="h6" component="h2">
-      //     Are you sure you want to delete the Machine Node? This action may also delete all the dependent nodes.
-      //     </Typography>
-
-      //     {/* Use proper label for radio buttons */}
-      //     <Box mt={2}>
-      //       hello
-      //     </Box>
-      //   </Box>
-      // </Modal>
+      
       <React.Fragment>
       <Dialog
         open={open}
@@ -4438,12 +3158,7 @@ const AdministrationShowRoutes = ({
           Are you sure you want to delete the Machine Node? This action may also 
           delete all the dependent nodes.
         </DialogTitle>
-        {/* <DialogContent>
-          <DialogContentText>
-          Are you sure you want to delete the Machine Node? This action may also 
-          delete all the dependent nodes.
-          </DialogContentText>
-        </DialogContent> */}
+        
         <DialogActions>
           <Button onClick={deleteSelectedElements}>Yes</Button>
           <Button autoFocus onClick={handleCloseDeletPopup}>
@@ -4452,7 +3167,6 @@ const AdministrationShowRoutes = ({
         </DialogActions>
       </Dialog>
     </React.Fragment>
-      )}
 
       {openUnselected && (
         <React.Fragment>

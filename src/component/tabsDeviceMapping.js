@@ -18,7 +18,7 @@ import { NODE_WIDTH, NODE_HEIGHT } from "../constants/chartlConstants.js";
 import AuthContext from "../context/AuthProvider.js";
 
 
-function DeviceMapping({tableHeight}) {
+function DeviceMapping({tableHeight, sendtoConfigurations}) {
   const {auth} = useContext(AuthContext)
   const [DeviceMapping, setDeviceMapping] = useState([]);
   const [Devices, setDevices] = useState([]);
@@ -175,6 +175,7 @@ function DeviceMapping({tableHeight}) {
       .delete(`${BASE_URL}/api/nodeMaster/${nodeId}`)
       .then((response) => {
         getNodesdata()
+        sendtoConfigurations();
         console.log("deleted successfully", response.data);
       })
       .catch((error) => {
@@ -182,16 +183,16 @@ function DeviceMapping({tableHeight}) {
       });
   }
 
-  const handleDeleteDeiceMapping = (deviceId) => {
-    console.log(deviceId);
-    const findDeviceId = DeviceMapping.filter((item) => item.Id == deviceId).map((item) => item.deviceId)
+  const handleDeleteDeiceMapping = () => {
+    const findDeviceId = DeviceMapping.filter((item) => item.Id == DeviceId).map((item) => parseInt(item.deviceId))
     console.log(findDeviceId);
-    const findNodeId = nodesdata.filter((item) => item.iconId == findDeviceId).map((item) => (item.nodeId));
+    const findNodeId = nodesdata.filter((item) => item.nodeType === 'device' && item.iconId == findDeviceId).map((item) => (item.nodeId));
     console.log(findNodeId);
     deleteNode(findNodeId)
     axios
-      .delete(`${BASE_URL}/api/deviceMapping/${deviceId}`,)
+      .delete(`${BASE_URL}/api/deviceMapping/${DeviceId}`,)
       .then((response) => {
+        sendtoConfigurations(DeviceId);
         console.log("Node deleted successfully", response.data);
         toast.success(
           <span><strong>Deleted</strong> successfully.</span>,
@@ -201,8 +202,7 @@ function DeviceMapping({tableHeight}) {
           }
         );
         setOpenDelete(false);
-        showDeviceMapping();
-        window.location.reload();
+        showDeviceMapping(deviceId);
       })
       .catch((error) => {
         console.error("Error deleting node:", error,
@@ -216,7 +216,10 @@ function DeviceMapping({tableHeight}) {
   }
 
   const [opendeletepopup, setOpenDelete] = useState(false);
-  const handleClickdeletepopup = () => {
+  const [DeviceId,setdeviceId] = useState()
+  const handleClickdeletepopup = (Id) => {
+    console.log(Id)
+    setdeviceId(Id)
     setOpenDelete(true);
   };
   const handleDeleteClose = () => {
@@ -269,16 +272,17 @@ function DeviceMapping({tableHeight}) {
       itemDescription: "",
       nodeType: "device",
       nodeName: getDeviceNameById(deviceId),
-      xPosition: 55,
-      yPosition: -40,
+      xPosition: 30,
+      yPosition: -41,
+      // { x: 30, y: -41.5 }
       type: "iconNode",
       parentNode: getParentNode(nodeId),
       extent: "parent",
       sourcePosition: "right",
       targetPosition: "left",
       iconId: deviceId,
-      width: "10",
-      height: "10",
+      width: "20",
+      height: "20",
       borderColor: "",
       borderStyle: "",
       borderWidth: "",
@@ -286,8 +290,8 @@ function DeviceMapping({tableHeight}) {
       FontStyle: "",
       borderRadius: "",
       FontColor: "",
-      branchId: "1001",
-      userId: "1111",
+      branchId: auth.branchId.toString(),
+      userId:  auth.empId.toString(),
       isRootNode: false,
       fillColor: "",
       fillTransparency: "",
@@ -302,6 +306,8 @@ function DeviceMapping({tableHeight}) {
     axios
       .post(`${BASE_URL}/api/nodeMaster`, deviceNode)
       .then((response) => {
+        sendtoConfigurations(deviceNode);
+        showNodes()
         console.log(response.data);
       })
       .catch((error) => {
@@ -314,7 +320,7 @@ function DeviceMapping({tableHeight}) {
       deviceId: deviceId,
       nodeId: nodeId,
       branchId: auth.branchId.toString(),
-      userId: auth.empid.toString(),
+      userId: auth.empId.toString(),
     }
     console.log(payload);
     axios
@@ -488,7 +494,7 @@ function DeviceMapping({tableHeight}) {
                             border: "none",
                             backgroundColor: "transparent",
                           }}
-                          onClick={handleClickdeletepopup}
+                          onClick={() => handleClickdeletepopup(item.Id)}
                         >
                           <FaMinus id="FaMinus"/>
                         </button>
@@ -515,7 +521,7 @@ function DeviceMapping({tableHeight}) {
                             </DialogContent>
                             <DialogActions>
                               <Button
-                                onClick={() => handleDeleteDeiceMapping(item.Id)}
+                                onClick={handleDeleteDeiceMapping}
                               >
                                 Yes
                               </Button>
@@ -631,7 +637,7 @@ function DeviceMapping({tableHeight}) {
                             border: "none",
                             backgroundColor: "transparent",
                           }}
-                          onClick={handleClickdeletepopup}
+                          onClick={() => handleClickdeletepopup(item.Id)}
                         >
                           <FaMinus id="FaMinus"/>
                         </button>
@@ -658,7 +664,7 @@ function DeviceMapping({tableHeight}) {
                             </DialogContent>
                             <DialogActions>
                               <Button
-                                onClick={() => handleDeleteDeiceMapping(item.Id)}
+                                onClick={handleDeleteDeiceMapping}
                               >
                                 Yes
                               </Button>

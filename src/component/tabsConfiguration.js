@@ -130,13 +130,14 @@ export default function BasicConfigurationTabs({
               </Tabs>
             </Box>
             <CustomTabPanel value={value} index={0}>
-              <Nodesdata nodeIdselected={nodeIdselected} tableHeight = {tableHeight}/>
+              <Nodesdata nodeIdselected={nodeIdselected} tableHeight = {tableHeight} sendtoConfigurations = {HandleNodestoOperations}/>
             </CustomTabPanel>
             <CustomTabPanel value={value} index={1} style={{ overflowY: "scroll" }}>
               <Edgesdata 
                 RoutedatafromEdge={RoutedatafromEdge} 
                 onClick={handleTableRowClick}
                 tableHeight = {tableHeight}
+                sendtoConfigurations = {HandleNodestoOperations}
                 />
             </CustomTabPanel>
             <CustomTabPanel value={value} index={2}>
@@ -146,7 +147,7 @@ export default function BasicConfigurationTabs({
               RM Mapping
             </CustomTabPanel>
             <CustomTabPanel value={value} index={4}>
-            <DeviceMapping tableHeight = {tableHeight}/>
+            <DeviceMapping tableHeight = {tableHeight} sendtoConfigurations = {HandleNodestoOperations}/>
             </CustomTabPanel>
             <CustomTabPanel value={value} index={5}>
             <BottomFGmapping tableHeight = {tableHeight}/>

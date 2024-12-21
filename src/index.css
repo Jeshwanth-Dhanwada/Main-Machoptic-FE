@@ -25,12 +25,19 @@ code {
 }
 
 .react-flow .react-flow__handle {
-  /* width: 30px;
-  height: 14px; */
-  border-radius: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  color: #1D9C9C;
   background-color: #1D9C9C;
-  /* background-color: #034661; */
 }
+/* .react-flow__handle.react-flow__handle-left {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  position: absolute;
+  left: -10px;
+} */
 
 .react-flow__node:hover .icon-container {
   display: flex;

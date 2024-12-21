@@ -78,7 +78,7 @@ const SveltaWithDB = () => {
         { unit: "month", format: "MMMM YYYY" }, // Added month unit
         { unit: "day", format: "DD-MM-YYYY" },
       ],
-      minWidth: 1000,
+      minWidth: 10000,
       fitWidth: false,
     },
     {
@@ -86,7 +86,7 @@ const SveltaWithDB = () => {
         { unit: "day", format: "MMMM Do" },
         { unit: "hour", format: "HH:mm" },
       ],
-      minWidth: 10000,
+      minWidth: 100000,
       fitWidth: false,
     },
     // {

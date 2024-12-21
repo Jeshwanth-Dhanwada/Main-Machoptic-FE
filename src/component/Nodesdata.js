@@ -1,5 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { getEdges, getNodeMaster, getRoutes } from "../api/shovelDetails";
+import {
+  getDeviceMapping,
+  getEdges,
+  getEmpNodeMapping,
+  getJobAssign,
+  getNodeMaster,
+  getRoutes,
+} from "../api/shovelDetails";
 import { FaArrowUp, FaCheck, FaMinus, FaXmark } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -7,19 +14,22 @@ import { BASE_URL } from "../constants/apiConstants";
 import axios from "axios";
 import AuthContext from "../context/AuthProvider";
 import ParameterVariable from "./ParameterVariable";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 
-function Nodesdata({tableHeight}) {
-  const {auth} = useContext(AuthContext)
-  const [edgesdata, setedgesdata] = useState([]);
+function Nodesdata({ tableHeight, sendtoConfigurations }) {
+  const { auth } = useContext(AuthContext);
   const [Nodedata, setNodedata] = useState([]);
-  const [Routedata, setRoutedata] = useState([]);
-
-  const showEdges = async (key) => {
-    const responsedata = await getEdges();
-    setedgesdata(responsedata, key);
-    // console.log(edgesdata,nodeIdselected)
-
-  };
+  const [AllNodeData, setAllNodeData] = useState([]);
+  const [devicemMappedData, setDevicemappingData] = useState([]);
+  const [employeeMappingData, setEmployeeMappedData] = useState([]);
+  const [jobAssignedData, setJobAssignData] = useState([]);
 
   useEffect(() => {
     console.log(Nodedata); // Log updated Nodedata
@@ -27,22 +37,38 @@ function Nodesdata({tableHeight}) {
 
   const showNodes = async (key) => {
     const responsedata = await getNodeMaster();
-    setNodedata(responsedata, key);
+    const filterNodes = responsedata.filter(
+      (item) => item.nodeType === "Machine" || item.nodeType === "Material"
+    );
+    setNodedata(filterNodes, key);
+    setAllNodeData(responsedata, key);
   };
 
-  const showRoutes = async (key) => {
-    const responsedata = await getRoutes();
-    setRoutedata(responsedata, key);
+  const showDeviceMapping = async (key) => {
+    const responsedata = await getDeviceMapping();
+    setDevicemappingData(responsedata, key);
+  };
+
+  const showEmployeeMapping = async (key) => {
+    const responsedata = await getEmpNodeMapping();
+    setEmployeeMappedData(responsedata, key);
+  };
+
+  const showJobAssignment = async (key) => {
+    const responsedata = await getJobAssign();
+    setJobAssignData(responsedata, key);
   };
 
   useEffect(() => {
-    showEdges();
     showNodes();
-    showRoutes();
+    showDeviceMapping();
+    showEmployeeMapping();
+    showJobAssignment();
   }, []);
 
   const [editedIndex, setEditedIndex] = useState(null);
-  const handleEdit = (index) => {
+  const handleEdit = (index, Id) => {
+    console.log(index, Id, "idcheck");
     setEditedIndex(index);
     console.log();
   };
@@ -53,59 +79,57 @@ function Nodesdata({tableHeight}) {
     const editedItem = Nodedata[editedIndex];
     console.log(editedItem);
     const edite = {
-      id : editedItem.id,
-      branchId : editedItem.branchId,
-      nodeCategory : editedItem.nodeCategory,
-      unit1Measurable : editedItem.unit1Measurable,
-      parentNode : editedItem.parentNode,
-      extent : editedItem.extent,
-      type : editedItem.type,
-      unit2Mandatory : editedItem.unit2Mandatory,
-      iconId : editedItem.iconId,
-      itemDescription : editedItem.itemDescription,
-      nodeImage : editedItem.nodeImage,
-      percentage_rejects : editedItem.percentage_rejects,
-      nodeCategoryId : editedItem.nodeCategoryId,
-      nodeType : editedItem.nodeType,
-      nodeName : editedItem.nodeName,
-      width : editedItem.width,
-      height : editedItem.height,
-      borderRadius : editedItem.borderRadius,
-      xPosition : editedItem.xPosition,
-      yPosition : editedItem.yPosition,
-      borderColor : editedItem.borderColor,
-      borderWidth : editedItem.borderWidth,
-      borderStyle : editedItem.borderStyle,
-      fillColor : editedItem.fillColor,
-      fillTransparency : editedItem.fillTransparency,
-      isRootNode : editedItem.isRootNode,
-      isParent : editedItem.isParent,
-      formula : editedItem.formula,
-      fuelUsed : editedItem.fuelUsed,
-      fuelUnitsId : editedItem.fuelUnitsId,
-      capacity : editedItem.capacity,
-      capacityUnitsId : editedItem.capacityUnitsId,
-      sourcePosition : editedItem.sourcePosition,
-      targetPosition : editedItem.targetPosition,
-      FontColor : editedItem.FontColor,
-      FontStyle : editedItem.FontStyle,
-      FontSize : editedItem.FontSize,
-      userId : editedItem.userId,
+      id: editedItem.id,
+      branchId: auth.branchId.toString(),
+      nodeCategory: editedItem.nodeCategory,
+      unit1Measurable: editedItem.unit1Measurable,
+      parentNode: editedItem.parentNode,
+      extent: editedItem.extent,
+      type: editedItem.type,
+      unit2Mandatory: editedItem.unit2Mandatory,
+      iconId: editedItem.iconId,
+      itemDescription: editedItem.itemDescription,
+      nodeImage: editedItem.nodeImage,
+      percentage_rejects: editedItem.percentage_rejects,
+      nodeCategoryId: editedItem.nodeCategoryId,
+      nodeType: editedItem.nodeType,
+      nodeName: editedItem.nodeName,
+      width: editedItem.width,
+      height: editedItem.height,
+      borderRadius: editedItem.borderRadius,
+      xPosition: editedItem.xPosition,
+      yPosition: editedItem.yPosition,
+      borderColor: editedItem.borderColor,
+      borderWidth: editedItem.borderWidth,
+      borderStyle: editedItem.borderStyle,
+      fillColor: editedItem.fillColor,
+      fillTransparency: editedItem.fillTransparency,
+      isRootNode: editedItem.isRootNode,
+      isParent: editedItem.isParent,
+      formula: editedItem.formula,
+      fuelUsed: editedItem.fuelUsed,
+      fuelUnitsId: editedItem.fuelUnitsId,
+      capacity: editedItem.capacity,
+      capacityUnitsId: editedItem.capacityUnitsId,
+      sourcePosition: editedItem.sourcePosition,
+      targetPosition: editedItem.targetPosition,
+      FontColor: editedItem.FontColor,
+      FontStyle: editedItem.FontStyle,
+      FontSize: editedItem.FontSize,
+      userId: auth.empId.toString(),
     };
-    console.log(edite);
+    console.log(edite, "idcheck");
     axios
       .put(`${BASE_URL}/api/nodeMaster/${editedItem.nodeId}`, edite)
       .then((response) => {
         console.log("Data saved successfully", response.data);
         setEditedIndex(null);
+        sendtoConfigurations(editedItem.nodeId);
         toast.success(
           <span>
             <strong>Successfully</strong> Updated.
           </span>,
-          {
-            position: toast.POSITION.BOTTOM_RIGHT,
-            className: 'custom-toast'
-          }
+          { position: toast.POSITION.BOTTOM_RIGHT, className: "custom-toast" }
         );
         showNodes();
       })
@@ -119,37 +143,142 @@ function Nodesdata({tableHeight}) {
     return node ? node.nodeName : "Node Not Found";
   }
 
-  const [container,setContainer] = useState(false)
-  const [selectnode,setSelectnode] = useState()
+  const [container, setContainer] = useState(false);
+  const [selectnode, setSelectnode] = useState();
   const handleOpen = (nodeId) => {
-    setContainer(!container)
-    setSelectnode(nodeId)
-    // onClick(nodeId)
-  }
+    setContainer(!container);
+    setSelectnode(nodeId);
+  };
   const HanldeModalContainer = () => {
-    setContainer(false)
-  }
+    setContainer(false);
+  };
   const [height, setHeight] = useState();
   useEffect(() => {
-    console.log(tableHeight,"heightt")
-    if(tableHeight > '1' && tableHeight < '360'){
-      setHeight(tableHeight-'100');
-    }
-    else{
-      setHeight('350px')
+    console.log(tableHeight, "heightt");
+    if (tableHeight > "1" && tableHeight < "360") {
+      setHeight(tableHeight - "100");
+    } else {
+      setHeight("350px");
     }
   }, []);
+
+  const [opendeletepopup, setOpenDelete] = useState(false);
+  const [nodeId, setNodeId] = useState();
+  const handleClickdeletepopup = (Id) => {
+    console.log(Id);
+    setNodeId(Id);
+    setOpenDelete(true);
+  };
+  const handleDeleteClose = () => {
+    setOpenDelete(false);
+  };
+
+  const handleDeleteNodes = () => {
+    const getid = AllNodeData.find((item) => item.nodeId === nodeId)?.id;
+    const getChildNodes = AllNodeData.filter(
+      (item) => item.parentNode === getid
+    ).map((item1) => item1.nodeId);
+    const getIconId = AllNodeData.filter(
+      (item) => item.parentNode === getid
+    ).map((item1) => ({
+      iconId: parseInt(item1.iconId),
+      nodeType: item1.nodeType,
+    }));
+
+    handleDeleteNodeMaster(getChildNodes, nodeId);
+    // Grouping iconIds by nodeType
+    const groupedByNodeType = getIconId.reduce((acc, item) => {
+      if (!acc[item.nodeType]) {
+        acc[item.nodeType] = [];
+      }
+      acc[item.nodeType].push(item.iconId);
+      return acc;
+    }, {});
+
+    console.log(groupedByNodeType);
+
+    // Step 4: Fetch data based on nodeType
+    for (const [nodeType, iconIds] of Object.entries(groupedByNodeType)) {
+      if (nodeType === "employee") {
+        const getEmpId = employeeMappingData.find(
+          (item) => item.emp.empId == iconIds
+        ).empnodemapId;
+        console.log(getEmpId);
+        HandleDeleteEmployeeMapping(getEmpId);
+      } else if (nodeType === "device") {
+        const getDeviceId = devicemMappedData.find(
+          (item) => item.deviceId == iconIds
+        ).Id;
+        console.log(getDeviceId);
+        HandleDeleteDeviceMapping(getDeviceId);
+      } else if (nodeType === "job") {
+        console.log(`Fetching job data for IDs: ${iconIds}`);
+      } else {
+        console.log(`Unknown nodeType: ${nodeType}`);
+      }
+    }
+  };
+
+  function handleDeleteNodeMaster(childnodes, machinenode) {
+    console.log(childnodes);
+    console.log(machinenode);
+    if(childnodes){
+      HandleChildNodeDeletion()
+    }
+    if(machinenode){
+      handleMachineNode()
+    }
+  }
+
+  const HandleDeleteDeviceMapping = (Id) => {
+    console.log(Id);
+  };
+
+  const HandleDeleteEmployeeMapping = (Id) => {
+    console.log(Id);
+  };
+
+  const HandleChildNodeDeletion = (ChildNodes) => {
+    ChildNodes.forEach(element => {
+      axios
+      .delete(`${BASE_URL}/api/employeeNodeMapping/${element}`)
+      .then((response) => {
+        console.log("Node deleted successfully", response.data);
+        // sendtoConfigurations(empNodeId);
+        toast.success(
+          <span><strong>Deleted</strong> successfully.</span>,
+          {position: toast.POSITION.BOTTOM_RIGHT,className: "custom-toast"}
+        );
+        setOpenDelete(false);
+      })
+      .catch((error) => {
+        console.error("Error deleting node:", error);
+        // toast.error(<span><strong>User</strong> is not authorized fot this action.</span>);
+      });
+    });
+  }
+
+  const handleMachineNode = (Id) => {
+
+  }
   return (
     <div>
       {container === true && (
-        <ParameterVariable container={container} selectnode={selectnode} onclick={HanldeModalContainer}/>
+        <ParameterVariable
+          container={container}
+          selectnode={selectnode}
+          onclick={HanldeModalContainer}
+        />
       )}
-      <div className="container-fluid" style={{
+      <div
+        className="container-fluid"
+        style={{
           // height: tableHeight ? tableHeight : '200px',
-          height:  height,
+          height: height,
           overflowY: "scroll",
-          overflowX :"hidden"
-        }}>
+          overflowX: "hidden",
+        }}
+      >
         <div className="row">
           <div className="col-12">
             <table className="table table-bordered table-striped">
@@ -172,8 +301,10 @@ function Nodesdata({tableHeight}) {
                 </tr>
               </thead>
               <tbody>
-                {Nodedata.filter((exe)=> exe.nodeType !== "device" && exe.nodeType !== "employee").
-                map((item, index) => (
+                {Nodedata.filter(
+                  (exe) =>
+                    exe.nodeType !== "device" && exe.nodeType !== "employee"
+                ).map((item, index) => (
                   <tr style={{ cursor: "pointer" }}>
                     <td>{item.nodeId}</td>
                     <td>{item.nodeName}</td>
@@ -414,7 +545,7 @@ function Nodesdata({tableHeight}) {
                                 }}
                                 onClick={removeEdit}
                               >
-                                <FaXmark id="FaMinus"/>
+                                <FaXmark id="FaMinus" />
                               </button>
                             </>
                           ) : (
@@ -423,9 +554,11 @@ function Nodesdata({tableHeight}) {
                                 border: "none",
                                 backgroundColor: "transparent",
                               }}
-                            //         onClick={() => handleDeleteFGMapping(item.id)}
+                              onClick={() =>
+                                handleClickdeletepopup(item.nodeId)
+                              }
                             >
-                              <FaMinus id="FaMinus"/>
+                              <FaMinus id="FaMinus" />
                             </button>
                           )}
                           &nbsp;&nbsp;
@@ -438,7 +571,7 @@ function Nodesdata({tableHeight}) {
                                 }}
                                 onClick={(event) => handleSave()}
                               >
-                                <FaCheck id="FaCheck"/>
+                                <FaCheck id="FaCheck" />
                               </button>
                             </>
                           ) : (
@@ -447,25 +580,23 @@ function Nodesdata({tableHeight}) {
                                 border: "none",
                                 backgroundColor: "transparent",
                               }}
-                              onClick={() => handleEdit(index)}
+                              onClick={() => handleEdit(index, item.nodeId)}
                             >
-                              <FaEdit id="FaEdit"/>
+                              <FaEdit id="FaEdit" />
                             </button>
                           )}
                           &nbsp;&nbsp;
                           <button
-                              style={{
-                                border: "none",
-                                backgroundColor: "transparent",
-                              }}
-                              // type="button" 
-                              // class="btn btn-primary"
-                              data-toggle="modal" 
-                              data-target="#exampleModalCenter"
-                              onClick={() => handleOpen(item)}
-                            >
-                             <FaArrowUp />
-                            </button>
+                            style={{
+                              border: "none",
+                              backgroundColor: "transparent",
+                            }}
+                            data-toggle="modal"
+                            data-target="#exampleModalCenter"
+                            onClick={() => handleOpen(item)}
+                          >
+                            <FaArrowUp />
+                          </button>
                         </div>
                       </td>
                     </td>
@@ -476,6 +607,33 @@ function Nodesdata({tableHeight}) {
           </div>
         </div>
       </div>
+      <React.Fragment>
+        <Dialog
+          open={opendeletepopup}
+          onClose={handleDeleteClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          PaperProps={{
+            style: {
+              marginTop: -350, // Adjust the marginTop value as needed
+              width: "40%",
+            },
+          }}
+        >
+          <DialogTitle id="alert-dialog-title">
+            {/* {"Taxonalytica"} */}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteNodes}>Yes</Button>
+            <Button onClick={handleDeleteClose}>No</Button>
+          </DialogActions>
+        </Dialog>
+      </React.Fragment>
     </div>
   );
 }
